@@ -1,84 +1,74 @@
-<html lang="en">
-<h3>Admin Actions</h3>
-<button id="clearSession" class="btn" style="background:#555">Clear MPIN sessions</button>
-<div class="small" style="margin-top:8px">Note: This admin page is a simple admin UI. For stronger security, integrate Firebase Authentication and protect this page server-side.</div>
-</div>
-
-
-</div>
-
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-<script>
-var firebaseConfig = {
-apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-authDomain: "school-test-4b350.firebaseapp.com",
-projectId: "school-test-4b350",
-storageBucket: "school-test-4b350.firebasestorage.app",
-messagingSenderId: "557567714700",
-appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
-
-
-// Add update
-document.getElementById('addUpdate').addEventListener('click',async ()=>{
-const t = document.getElementById('updTitle').value.trim();
-const b = document.getElementById('updBody').value.trim();
-if(!t || !b) return document.getElementById('updMsg').innerText='Please fill title and body.';
-document.getElementById('updMsg').innerText='Publishing...';
-try{
-await db.collection('updates').add({title:t,body:b,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-document.getElementById('updMsg').innerText='Published.';
-document.getElementById('updTitle').value='';document.getElementById('updBody').value='';
-}catch(e){document.getElementById('updMsg').innerText='Error: '+e.message}
+<!-- admin.html -->
+catch(e){msg.innerText='Error: '+e.message}
 });
 
 
 // Add event
-document.getElementById('addEvent').addEventListener('click',async ()=>{
-const t = document.getElementById('evTitle').value.trim();
-const d = document.getElementById('evDate').value;
-const n = document.getElementById('evNote').value.trim();
-if(!t || !d) return document.getElementById('evMsg').innerText='Please add title and date.';
-document.getElementById('evMsg').innerText='Adding...';
+document.getElementById('addEventBtn').addEventListener('click',async ()=>{
+const t = document.getElementById('eventTitle').value.trim();
+const d = document.getElementById('eventDate').value;
+const n = document.getElementById('eventNote').value.trim();
+const msg = document.getElementById('evMsg'); msg.innerText='';
+if(!t || !d) return msg.innerText='Please add title and date.';
+msg.innerText='Adding event...';
 try{
 const dateObj = new Date(d+'T00:00:00');
 await db.collection('events').add({title:t,date:firebase.firestore.Timestamp.fromDate(dateObj),note:n,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-document.getElementById('evMsg').innerText='Event added.';
-document.getElementById('evTitle').value='';document.getElementById('evDate').value='';document.getElementById('evNote').value='';
-}catch(e){document.getElementById('evMsg').innerText='Error: '+e.message}
+msg.innerText='Event added.'; document.getElementById('eventTitle').value=''; document.getElementById('eventDate').value=''; document.getElementById('eventNote').value='';
+}catch(e){msg.innerText='Error: '+e.message}
 });
 
 
 // Upload photo
-document.getElementById('uploadPhoto').addEventListener('click',async ()=>{
-const fileIn = document.getElementById('photoFile');
-const caption = document.getElementById('photoCaption').value.trim();
-if(!fileIn.files.length) return document.getElementById('photoMsg').innerText='Choose a photo first.';
-const file = fileIn.files[0];
-const id = Date.now() + '_' + file.name.replace(/\s/g,'_');
-document.getElementById('photoMsg').innerText='Uploading...';
+const photoInput = document.getElementById('photoInput');
+const previewImg = document.getElementById('previewImg');
+photoInput.addEventListener('change',()=>{
+if(photoInput.files && photoInput.files[0]){
+const url = URL.createObjectURL(photoInput.files[0]); previewImg.src = url; previewImg.style.display='block';
+} else { previewImg.style.display='none'; }
+});
+
+
+document.getElementById('uploadBtn').addEventListener('click',async ()=>{
+const files = photoInput.files; const msg = document.getElementById('photoMsg'); msg.innerText='';
+if(!files || !files.length) return msg.innerText='Please choose a photo.';
+const cap = document.getElementById('photoCaption').value.trim();
+msg.innerText='Uploading...';
 try{
+const file = files[0]; const id = Date.now() + '_' + file.name.replace(/\s/g,'_');
 const ref = storage.ref('gallery/'+id);
 await ref.put(file);
 const url = await ref.getDownloadURL();
-await db.collection('gallery').add({name:caption || file.name,url:url,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-document.getElementById('photoMsg').innerText='Uploaded.';
-document.getElementById('photoFile').value='';document.getElementById('photoCaption').value='';
-}catch(e){document.getElementById('photoMsg').innerText='Error: '+e.message}
+await db.collection('gallery').add({name:cap || file.name,url:url,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+msg.innerText='Uploaded.'; photoInput.value=''; document.getElementById('photoCaption').value=''; previewImg.style.display='none';
+}catch(e){msg.innerText='Error: '+e.message}
 });
 
 
-document.getElementById('clearSession').addEventListener('click',()=>{
-// Clear unlocked MPIN from all tabs (only affects sessionStorage on this browser)
-sessionStorage.removeItem('mpinUnlocked');
-alert('Cleared session. Students will need MPIN again.');
-});
+// Clear local sessions
+document.getElementById('logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem('cs_mpin_ok'); alert('Cleared local student sessions.'); });
+
+
+// Live content preview
+const liveContent = document.getElementById('liveContent');
+function loadLive(){
+liveContent.innerHTML='Loading...';
+Promise.all([
+db.collection('updates').orderBy('createdAt','desc').limit(3).get(),
+db.collection('events').orderBy('date','asc').limit(3).get(),
+db.collection('gallery').orderBy('createdAt','desc').limit(6).get()
+]).then(([u,e,g])=>{
+let html='';
+html += '<div style="margin-bottom:10px"><strong>Latest updates:</strong><br/>' + (u.empty? 'No updates.' : Array.from(u.docs).map(d=>escapeHtml(d.data().title)).join(', ')) + '</div>';
+html += '<div style="margin-bottom:10px"><strong>Upcoming events:</strong><br/>' + (e.empty? 'No events.' : Array.from(e.docs).map(d=>escapeHtml(d.data().title + ' (' + (d.data().date && d.data().date.toDate? d.data().date.toDate().toDateString() : '') + ')')).join(', ')) + '</div>';
+html += '<div><strong>Gallery preview:</strong><br/>' + (g.empty? 'No photos.' : Array.from(g.docs).map(d=>'<img src="'+d.data().url+'" style="height:38px;border-radius:6px;margin:4px">').join('')) + '</div>';
+liveContent.innerHTML = html;
+}).catch(err=>{ liveContent.innerText = 'Error: '+err.message; });
+}
+loadLive();
+
+
+function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
