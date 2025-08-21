@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crescent School | Admin Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #0b2c5d, #123f7a);
+      color: #fff;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #0b2c5d;
+      font-size: 24px;
+      font-weight: bold;
+      color: gold;
+    }
+    .login-box, .dashboard {
+      max-width: 600px;
+      margin: 80px auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    input {
+      padding: 12px;
+      width: 80%;
+      border-radius: 10px;
+      border: none;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      background: gold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+    }
+    button:hover { background: #e0c200; }
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 12px;
+    }
+    h2 { color: gold; }
+  </style>
+</head>
+<body>
+  <header>⚙️ Crescent School - Admin Panel</header>
+  
+  <div class="login-box" id="loginBox">
+    <h2>Enter Admin MPIN</h2>
+    <input type="password" id="adminPin" placeholder="Enter MPIN"/>
+    <br/>
+    <button onclick="adminLogin()">Login</button>
+  </div>
+
+  <div class="dashboard" id="adminDashboard" style="display:none;">
+    <h2>Welcome Admin 👑</h2>
+    
+    <div class="card">
+      <h3>📢 Add Update</h3>
+      <input type="text" id="updateText" placeholder="Write update"/>
+      <button onclick="addUpdate()">Add</button>
+    </div>
+
+    <div class="card">
+      <h3>📜 Add Notice</h3>
+      <input type="text" id="noticeText" placeholder="Write notice"/>
+      <button onclick="addNotice()">Add</button>
+    </div>
+
+    <div class="card">
+      <h3>📅 Add Calendar Event</h3>
+      <input type="text" id="calendarEvent" placeholder="Write event"/>
+      <button onclick="addCalendar()">Add</button>
+    </div>
+
+    <div class="card">
+      <h3>🖼 Add Gallery Image</h3>
+      <input type="text" id="galleryUrl" placeholder="Paste image URL"/>
+      <button onclick="addGallery()">Add</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+      authDomain: "school-test-4b350.firebaseapp.com",
+      projectId: "school-test-4b350",
+      storageBucket: "school-test-4b350.firebasestorage.app",
+      messagingSenderId: "557567714700",
+      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function adminLogin() {
+      const pin = document.getElementById("adminPin").value;
+      if (pin === "654321") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("adminDashboard").style.display = "block";
+      } else {
+        alert("Wrong Admin MPIN ❌");
+      }
+    }
+
+    function addUpdate() {
+      let text = document.getElementById("updateText").value;
+      db.collection("updates").add({text});
+      alert("Update added ✅");
+    }
+    function addNotice() {
+      let text = document.getElementById("noticeText").value;
+      db.collection("notices").add({text});
+      alert("Notice added ✅");
+    }
+    function addCalendar() {
+      let event = document.getElementById("calendarEvent").value;
+      db.collection("calendar").add({event});
+      alert("Event added ✅");
+    }
+    function addGallery() {
+      let url = document.getElementById("galleryUrl").value;
+      db.collection("gallery").add({url});
+      alert("Image added ✅");
+    }
+  </script>
+</body>
+</html>
