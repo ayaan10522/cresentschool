@@ -1,101 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crescent School | Admin Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crescent School - Admin Portal</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #0b2c5d, #123f7a);
-      color: #fff;
+      font-family: Arial, sans-serif;
+      background: #fffdf8;
+      color: #333;
     }
     header {
-      text-align: center;
-      padding: 20px;
-      background: #0b2c5d;
-      font-size: 24px;
+      background: #004d00;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header img {
+      height: 50px;
+    }
+    nav a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
       font-weight: bold;
-      color: gold;
     }
-    .login-box, .dashboard {
-      max-width: 600px;
-      margin: 80px auto;
-      background: rgba(255, 255, 255, 0.1);
+    nav a:hover {
+      text-decoration: underline;
+    }
+    section {
       padding: 30px;
-      border-radius: 15px;
-      text-align: center;
-      backdrop-filter: blur(10px);
     }
-    input {
-      padding: 12px;
-      width: 80%;
+    h2 {
+      color: #004d00;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
+    }
+    .form-box {
+      background: #f9fff9;
+      padding: 20px;
+      margin: 20px 0;
       border-radius: 10px;
-      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
       margin: 10px 0;
-      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 10px;
-      background: gold;
-      font-size: 16px;
+      background: #004d00;
+      color: white;
       cursor: pointer;
-      transition: 0.3s;
-      margin: 5px;
     }
-    button:hover { background: #e0c200; }
+    button:hover {
+      background: #006600;
+    }
     .card {
-      background: rgba(255, 255, 255, 0.15);
+      background: #fff;
+      padding: 20px;
       margin: 15px 0;
-      padding: 15px;
-      border-radius: 12px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    h2 { color: gold; }
+    footer {
+      background: #004d00;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
-  <header>⚙️ Crescent School - Admin Panel</header>
-  
-  <div class="login-box" id="loginBox">
-    <h2>Enter Admin MPIN</h2>
-    <input type="password" id="adminPin" placeholder="Enter MPIN"/>
-    <br/>
-    <button onclick="adminLogin()">Login</button>
-  </div>
+  <header>
+    <img src="logo.png" alt="Crescent School Logo">
+    <nav>
+      <a href="#updates">Updates</a>
+      <a href="#notice">Notice</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#calendar">Calendar</a>
+    </nav>
+  </header>
 
-  <div class="dashboard" id="adminDashboard" style="display:none;">
-    <h2>Welcome Admin 👑</h2>
-    
-    <div class="card">
-      <h3>📢 Add Update</h3>
-      <input type="text" id="updateText" placeholder="Write update"/>
-      <button onclick="addUpdate()">Add</button>
+  <section id="updates">
+    <h2>Manage Updates</h2>
+    <div class="form-box">
+      <input type="text" id="update-title" placeholder="Title">
+      <textarea id="update-desc" placeholder="Description"></textarea>
+      <button onclick="addData('updates')">Add Update</button>
     </div>
+    <div id="updates-list"></div>
+  </section>
 
-    <div class="card">
-      <h3>📜 Add Notice</h3>
-      <input type="text" id="noticeText" placeholder="Write notice"/>
-      <button onclick="addNotice()">Add</button>
+  <section id="notice">
+    <h2>Manage Notices</h2>
+    <div class="form-box">
+      <input type="text" id="notice-title" placeholder="Title">
+      <textarea id="notice-desc" placeholder="Description"></textarea>
+      <button onclick="addData('notice')">Add Notice</button>
     </div>
+    <div id="notice-list"></div>
+  </section>
 
-    <div class="card">
-      <h3>📅 Add Calendar Event</h3>
-      <input type="text" id="calendarEvent" placeholder="Write event"/>
-      <button onclick="addCalendar()">Add</button>
+  <section id="gallery">
+    <h2>Manage Gallery</h2>
+    <div class="form-box">
+      <input type="text" id="gallery-title" placeholder="Image Title">
+      <textarea id="gallery-desc" placeholder="Image URL"></textarea>
+      <button onclick="addData('gallery')">Add Image</button>
     </div>
+    <div id="gallery-list"></div>
+  </section>
 
-    <div class="card">
-      <h3>🖼 Add Gallery Image</h3>
-      <input type="text" id="galleryUrl" placeholder="Paste image URL"/>
-      <button onclick="addGallery()">Add</button>
+  <section id="calendar">
+    <h2>Manage Calendar</h2>
+    <div class="form-box">
+      <input type="date" id="calendar-date">
+      <textarea id="calendar-event" placeholder="Event Description"></textarea>
+      <button onclick="addData('calendar')">Add Event</button>
     </div>
-  </div>
+    <div id="calendar-list"></div>
+  </section>
 
+  <footer>
+    &copy; 2025 Crescent School | Admin Portal
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
@@ -105,39 +143,47 @@
       messagingSenderId: "557567714700",
       appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
     };
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function adminLogin() {
-      const pin = document.getElementById("adminPin").value;
-      if (pin === "654321") {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("adminDashboard").style.display = "block";
+    function addData(collection) {
+      let title = document.getElementById(collection + "-title").value;
+      let desc = document.getElementById(collection + "-desc")?.value || "";
+      let date = document.getElementById(collection + "-date")?.value || "";
+      let event = document.getElementById(collection + "-event")?.value || "";
+
+      let data = {};
+      if (collection === "calendar") {
+        data = { date, event };
       } else {
-        alert("Wrong Admin MPIN ❌");
+        data = { title, description: desc };
       }
+
+      db.collection(collection).add(data);
     }
 
-    function addUpdate() {
-      let text = document.getElementById("updateText").value;
-      db.collection("updates").add({text});
-      alert("Update added ✅");
+    function loadData(collection, elementId) {
+      db.collection(collection).onSnapshot(snapshot => {
+        let html = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          html += `<div class="card">
+              <p><b>${data.title || data.date}:</b> ${data.description || data.event || ""}</p>
+              <button onclick="removeData('${collection}','${doc.id}')">Remove</button>
+            </div>`;
+        });
+        document.getElementById(elementId).innerHTML = html || "No data yet.";
+      });
     }
-    function addNotice() {
-      let text = document.getElementById("noticeText").value;
-      db.collection("notices").add({text});
-      alert("Notice added ✅");
+
+    function removeData(collection, id) {
+      db.collection(collection).doc(id).delete();
     }
-    function addCalendar() {
-      let event = document.getElementById("calendarEvent").value;
-      db.collection("calendar").add({event});
-      alert("Event added ✅");
-    }
-    function addGallery() {
-      let url = document.getElementById("galleryUrl").value;
-      db.collection("gallery").add({url});
-      alert("Image added ✅");
-    }
+
+    loadData("updates", "updates-list");
+    loadData("notice", "notice-list");
+    loadData("gallery", "gallery-list");
+    loadData("calendar", "calendar-list");
   </script>
 </body>
 </html>
