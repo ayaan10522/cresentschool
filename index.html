@@ -1,72 +1,90 @@
-<!--
-Crescent School — Professional Student & Admin Portals
-
-
-INSTRUCTIONS:
-1) This textdoc contains two ready-to-use HTML files. Save each section between the markers as separate files in the same folder:
-- Save the section starting with "<!-- student.html -->" up to "<!-- end student.html -->" as: student.html
-- Save the section starting with "<!-- admin.html -->" up to "<!-- end admin.html -->" as: admin.html
-2) Place your school logo image in the same folder as: logo.png
-3) The Firebase configuration is already inserted (the values you gave). If you change projects, replace the firebaseConfig object in both files.
-4) MPIN is set to <strong>123456</strong>. You can change the MPIN in both files by editing the JS constant MPIN.
-5) Open student.html in a browser to use the student portal. Open admin.html for admin actions. For production, add Firebase Authentication or host the admin behind secure server rules.
-
-
-FEATURES INCLUDED:
-- Fully responsive, large, modern design matching the logo colors.
-- Separate pages: student.html (student portal) and admin.html (admin dashboard).
-- Student portal: MPIN gate, large hero, sections for Updates, Calendar, Gallery; real-time Firestore listeners.
-- Admin portal: sidebar dashboard, create updates, add events (with proper date), upload gallery photos (to Firebase Storage).
-- Real-time updates: when admin adds content, students see it instantly.
-- Helpful UI touches: image preview, confirmation messages, larger fonts and spacing to look "pro" and bold.
-
-
-SECURITY NOTE:
-This demo uses client-side JS with Firebase. For production, secure the admin area using Firebase Authentication and Firestore Security Rules. I can add Auth integration if you want.
-
-
--->
-
-
-<!-- student.html -->
-<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crescent School — Student Portal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--green:#2f6b3d;--gold:#d4b85a;--deep:#0f3526;--bg:#f7fbf7}
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--deep)}
-header{background:linear-gradient(90deg,var(--green),var(--gold));color:#fff;padding:26px 40px;display:flex;align-items:center;gap:18px}
-header img{height:72px;border-radius:12px;border:4px solid rgba(255,255,255,0.16)}
-header .brand{font-weight:800;font-size:20px}
-.wrap{max-width:1200px;margin:28px auto;padding:0 20px}
+import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js'
 
 
-/* MPIN modal */
-.overlay{position:fixed;inset:0;background:rgba(10,20,10,0.45);display:flex;align-items:center;justify-content:center;z-index:60}
-.mpin-box{background:#fff;padding:28px;border-radius:12px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(10,30,20,0.12);text-align:center}
-.mpin-box h2{margin:0 0 8px;font-size:22px}
-.mpin-box p{margin:0 0 18px;color:#4a6a56}
-.mpin-input{font-size:20px;padding:12px;border-radius:10px;border:2px solid #e9efe7;width:60%;text-align:center}
-.btn{background:var(--green);color:#fff;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
-.btn.secondary{background:transparent;color:var(--deep);border:2px solid rgba(0,0,0,0.06)}
+const firebaseConfig = {
+apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+authDomain: "school-test-4b350.firebaseapp.com",
+projectId: "school-test-4b350",
+storageBucket: "school-test-4b350.firebasestorage.app",
+messagingSenderId: "557567714700",
+appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+}
 
 
-/* Hero */
-.hero{display:flex;gap:18px;background:linear-gradient(180deg,#ffffff,rgba(255,255,255,0.9));padding:28px;border-radius:14px;align-items:center}
-.hero .left{flex:1}
-.hero h1{margin:0;font-size:34px}
-.hero p{margin:8px 0 0;color:#46644f}
-.hero .cta{margin-top:14px}
+const app = initializeApp(firebaseConfig)
+const db = getFirestore(app)
+const storage = getStorage(app)
 
 
-/* Nav cards */
-.cards{display:flex;gap:18px;margin-top:20px}
-.card{flex:1;background:#fff;padding:18px;border-radius:12px;box-shadow:0 14px 36px rgba(16,48,23,0.05)}
-.card h3{margin:0 0 8px}
+// Elements
+const addUpdateBtn = document.getElementById('addUpdate')
+const updTitle = document.getElementById('updTitle')
+const updBody = document.getElementById('updBody')
+const updResult = document.getElementById('updResult')
+
+
+const addEventBtn = document.getElementById('addEvent')
+const evtTitle = document.getElementById('evtTitle')
+const evtDate = document.getElementById('evtDate')
+const evtType = document.getElementById('evtType')
+const evtNote = document.getElementById('evtNote')
+const evtResult = document.getElementById('evtResult')
+
+
+const uploadPhotoBtn = document.getElementById('uploadPhoto')
+const photoFile = document.getElementById('photoFile')
+const photoCaption = document.getElementById('photoCaption')
+const photoResult = document.getElementById('photoResult')
+
+
+addUpdateBtn.addEventListener('click', async ()=>{
+updResult.textContent = 'Publishing...'
+try{
+await addDoc(collection(db,'updates'),{
+title: updTitle.value||'Untitled',
+body: updBody.value||'',
+createdAt: serverTimestamp()
+})
+updResult.textContent = 'Update published.'
+updTitle.value=''; updBody.value=''
+}catch(e){ updResult.textContent = 'Failed: '+e.message }
+})
+
+
+addEventBtn.addEventListener('click', async ()=>{
+if(!evtDate.value){ evtResult.textContent='Pick a date'; return }
+evtResult.textContent='Adding...'
+try{
+await addDoc(collection(db,'events'),{
+title: evtTitle.value||'Event',
+date: new Date(evtDate.value),
+type: evtType.value,
+note: evtNote.value||'',
+createdAt: serverTimestamp()
+})
+evtResult.textContent='Event added.'
+evtTitle.value=''; evtDate.value=''; evtNote.value=''
+}catch(e){ evtResult.textContent='Failed: '+e.message }
+})
+
+
+uploadPhotoBtn.addEventListener('click', async ()=>{
+const f = photoFile.files[0]
+if(!f){ photoResult.textContent='Select a file first'; return }
+photoResult.textContent='Uploading...'
+try{
+const fileRef = ref(storage, `gallery/${Date.now()}_${f.name}`)
+await uploadBytes(fileRef, f)
+const url = await getDownloadURL(fileRef)
+// Optionally save URL to Firestore collection for search / captions
+await addDoc(collection(db,'gallery'),{ url, caption: photoCaption.value||'', createdAt: serverTimestamp() })
+photoResult.innerHTML = 'Uploaded. <a href="'+url+'" target="_blank">Open image</a>'
+photoFile.value=''; photoCaption.value=''
+}catch(e){ photoResult.textContent='Failed: '+e.message }
+})
+</script>
+</body>
 </html>
+
