@@ -1,90 +1,67 @@
 <html lang="en">
-import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js'
-
-
-const firebaseConfig = {
-apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-authDomain: "school-test-4b350.firebaseapp.com",
-projectId: "school-test-4b350",
-storageBucket: "school-test-4b350.firebasestorage.app",
-messagingSenderId: "557567714700",
-appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+list.innerHTML = ''
+snap.forEach(doc=>{
+const d = doc.data()
+const el = document.createElement('div'); el.className='update'
+el.innerHTML = `<h3>${escapeHTML(d.title||'Untitled')}</h3><div class="meta">${new Date(d.createdAt?.toDate ? d.createdAt.toDate() : d.createdAt).toLocaleString()}</div><p>${escapeHTML(d.body||'')}</p>`
+list.appendChild(el)
+})
+}catch(e){ list.innerHTML = '<div class="meta">Could not load updates.</div>' ; console.error(e) }
 }
 
 
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app)
-const storage = getStorage(app)
-
-
-// Elements
-const addUpdateBtn = document.getElementById('addUpdate')
-const updTitle = document.getElementById('updTitle')
-const updBody = document.getElementById('updBody')
-const updResult = document.getElementById('updResult')
-
-
-const addEventBtn = document.getElementById('addEvent')
-const evtTitle = document.getElementById('evtTitle')
-const evtDate = document.getElementById('evtDate')
-const evtType = document.getElementById('evtType')
-const evtNote = document.getElementById('evtNote')
-const evtResult = document.getElementById('evtResult')
-
-
-const uploadPhotoBtn = document.getElementById('uploadPhoto')
-const photoFile = document.getElementById('photoFile')
-const photoCaption = document.getElementById('photoCaption')
-const photoResult = document.getElementById('photoResult')
-
-
-addUpdateBtn.addEventListener('click', async ()=>{
-updResult.textContent = 'Publishing...'
+// Load events from collection 'events'
+async function loadEvents(){
+const list = document.getElementById('eventsList')
+list.innerHTML='Loading events...'
 try{
-await addDoc(collection(db,'updates'),{
-title: updTitle.value||'Untitled',
-body: updBody.value||'',
-createdAt: serverTimestamp()
+const q = query(collection(db,'events'), orderBy('date','asc'))
+const snap = await getDocs(q)
+if(snap.empty){ list.innerHTML='<div class="meta">No events yet</div>'; return }
+list.innerHTML=''
+snap.forEach(doc=>{
+const d = doc.data()
+const dateStr = d.date?.toDate ? new Date(d.date.toDate()).toDateString() : (d.date? new Date(d.date).toDateString() : 'Unknown')
+const el = document.createElement('div'); el.className='event'
+el.innerHTML = `<strong>${escapeHTML(d.title||'Event')}</strong> <div class="meta">${dateStr} • ${escapeHTML(d.type||'General')}</div><p>${escapeHTML(d.note||'')}</p>`
+list.appendChild(el)
 })
-updResult.textContent = 'Update published.'
-updTitle.value=''; updBody.value=''
-}catch(e){ updResult.textContent = 'Failed: '+e.message }
-})
+}catch(e){ list.innerHTML='<div class="meta">Could not load events.</div>'; console.error(e) }
+}
 
 
-addEventBtn.addEventListener('click', async ()=>{
-if(!evtDate.value){ evtResult.textContent='Pick a date'; return }
-evtResult.textContent='Adding...'
+// Load gallery from Storage folder 'gallery' (or from 'gallery' collection urls if maintenance required)
+async function loadGallery(){
+const grid = document.getElementById('galleryGrid')
+grid.innerHTML='Loading gallery...'
 try{
-await addDoc(collection(db,'events'),{
-title: evtTitle.value||'Event',
-date: new Date(evtDate.value),
-type: evtType.value,
-note: evtNote.value||'',
-createdAt: serverTimestamp()
+const listRef = ref(storage,'gallery')
+const res = await listAll(listRef)
+grid.innerHTML=''
+if(res.items.length===0){ grid.innerHTML='<div class="meta">No photos yet</div>'; return }
+const urls = await Promise.all(res.items.map(i=>getDownloadURL(i)))
+urls.forEach(u => {
+const img = document.createElement('img'); img.src = u
+grid.appendChild(img)
 })
-evtResult.textContent='Event added.'
-evtTitle.value=''; evtDate.value=''; evtNote.value=''
-}catch(e){ evtResult.textContent='Failed: '+e.message }
-})
+}catch(e){
+grid.innerHTML='<div class="meta">Could not load gallery.</div>'
+console.error(e)
+}
+}
 
 
-uploadPhotoBtn.addEventListener('click', async ()=>{
-const f = photoFile.files[0]
-if(!f){ photoResult.textContent='Select a file first'; return }
-photoResult.textContent='Uploading...'
-try{
-const fileRef = ref(storage, `gallery/${Date.now()}_${f.name}`)
-await uploadBytes(fileRef, f)
-const url = await getDownloadURL(fileRef)
-// Optionally save URL to Firestore collection for search / captions
-await addDoc(collection(db,'gallery'),{ url, caption: photoCaption.value||'', createdAt: serverTimestamp() })
-photoResult.innerHTML = 'Uploaded. <a href="'+url+'" target="_blank">Open image</a>'
-photoFile.value=''; photoCaption.value=''
-}catch(e){ photoResult.textContent='Failed: '+e.message }
-})
+// Helper escape
+function escapeHTML(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+
+// initApp after MPIN
+function initApp(){ loadUpdates(); loadEvents(); loadGallery();
+// optional: poll every 20s to keep fresh (simple)
+setInterval(()=>{ loadUpdates(); loadEvents(); loadGallery() }, 20000)
+}
+
+
 </script>
 </body>
 </html>
-
