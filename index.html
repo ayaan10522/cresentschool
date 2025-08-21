@@ -2,57 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>School - Student Page</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <title>Student Portal</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h2 { color: #2a7; }
-    .notice { background: #f4f4f4; padding: 10px; margin: 10px 0; border-left: 4px solid #2a7; }
-    .gallery img { width: 150px; margin: 10px; border-radius: 8px; }
+    body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; text-align:center; }
+    .login { margin-top:100px; }
+    .section { padding:20px; margin:20px; background:#fff; border-radius:10px; box-shadow:0 0 5px gray; }
+    h2 { color:#2c3e50; }
+    img { max-width:150px; margin:10px; border-radius:10px; }
   </style>
 </head>
 <body>
-  <h1>Welcome Students</h1>
-  
-  <h2>Latest Notices</h2>
-  <div id="notices"></div>
 
-  <h2>Gallery</h2>
-  <div class="gallery" id="gallery"></div>
+<div id="login" class="login">
+  <h2>Enter MPIN</h2>
+  <input type="password" id="mpin">
+  <button onclick="checkLogin()">Login</button>
+  <p id="error" style="color:red;"></p>
+</div>
 
-  <script>
-    // Firebase config (use your keys)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-      authDomain: "school-test-4b350.firebaseapp.com",
-      projectId: "school-test-4b350",
-      storageBucket: "school-test-4b350.firebasestorage.app",
-      messagingSenderId: "557567714700",
-      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-    };
+<div id="portal" style="display:none;">
+  <h1>Welcome Student</h1>
 
-    // Init Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  <div class="section">
+    <h2>Updates</h2>
+    <ul id="updates"></ul>
+  </div>
 
-    // Load Notices
-    db.collection("updates").onSnapshot(snapshot => {
-      const container = document.getElementById("notices");
-      container.innerHTML = "";
-      snapshot.forEach(doc => {
-        container.innerHTML += `<div class="notice">${doc.data().text}</div>`;
-      });
+  <div class="section">
+    <h2>Notices</h2>
+    <ul id="notices"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Calendar</h2>
+    <ul id="calendar"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Gallery</h2>
+    <div id="gallery"></div>
+  </div>
+</div>
+
+<script>
+  // 🔹 Firebase Config (replace with your own from Firebase Console)
+  var firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
+
+  function checkLogin(){
+    let pin = document.getElementById("mpin").value;
+    if(pin==="123456"){
+      document.getElementById("login").style.display="none";
+      document.getElementById("portal").style.display="block";
+      loadData();
+    } else {
+      document.getElementById("error").innerText="Wrong MPIN!";
+    }
+  }
+
+  function loadData(){
+    db.ref("updates").on("value", snap=>{
+      let list=document.getElementById("updates"); list.innerHTML="";
+      snap.forEach(item=>{ list.innerHTML+="<li>"+item.val()+"</li>"; });
     });
 
-    // Load Gallery
-    db.collection("gallery").onSnapshot(snapshot => {
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      snapshot.forEach(doc => {
-        gallery.innerHTML += `<img src="${doc.data().url}" alt="School Image">`;
-      });
+    db.ref("notices").on("value", snap=>{
+      let list=document.getElementById("notices"); list.innerHTML="";
+      snap.forEach(item=>{ list.innerHTML+="<li>"+item.val()+"</li>"; });
     });
-  </script>
+
+    db.ref("calendar").on("value", snap=>{
+      let list=document.getElementById("calendar"); list.innerHTML="";
+      snap.forEach(item=>{ list.innerHTML+="<li>"+item.val()+"</li>"; });
+    });
+
+    db.ref("gallery").on("value", snap=>{
+      let gal=document.getElementById("gallery"); gal.innerHTML="";
+      snap.forEach(item=>{ gal.innerHTML+="<img src='"+item.val()+"'>" });
+    });
+  }
+</script>
+
 </body>
 </html>
