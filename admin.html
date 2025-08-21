@@ -1,83 +1,85 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Crescent School Admin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      body { font-family:'Segoe UI',sans-serif; background:#f7fff4; color:#234013; }
-      .main { max-width:500px; margin:3em auto; background:#fff; border-radius:12px; box-shadow:0 3px 12px #a3be6330; padding:32px;}
-      h2 { color:#5b8d2d;}
-      input,textarea,select,button { width:100%; padding:8px; margin:6px 0 16px 0; border-radius:5px; border:1px solid #a3be63; }
-      label { font-weight:600;}
-      .section { margin-bottom:36px; border-bottom:1px solid #e7efe2; padding-bottom:24px;}
-      .gallery-preview img {max-width:100px;}
-    </style>
-</head>
-<body>
-    <div class="main">
-        <h2>Crescent School Admin</h2>
-        <div class="section">
-            <h3>Add Update</h3>
-            <label>Title</label><input id="update-title"><br>
-            <label>Text</label><textarea id="update-text"></textarea><br>
-            <button onclick="addUpdate()">Add Update</button>
-        </div>
-        <div class="section">
-            <h3>Add Calendar Event</h3>
-            <label>Event Title</label><input id="event-title"><br>
-            <label>Date</label><input id="event-date" type="date"><br>
-            <label>Description</label><textarea id="event-desc"></textarea><br>
-            <button onclick="addCal()">Add Event</button>
-        </div>
-        <div class="section">
-            <h3>Add Gallery Photo</h3>
-            <label>Pick photo</label><input type="file" id="gallery-img"><br>
-            <button onclick="addGallery()">Upload Photo</button>
-            <div class="gallery-preview"></div>
-        </div>
-    </div>
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-storage-compat.js"></script>
-    <script>
-        // Firebase config
-        const firebaseConfig = {
-          apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-          authDomain: "school-test-4b350.firebaseapp.com",
-          projectId: "school-test-4b350",
-          storageBucket: "school-test-4b350.appspot.com",
-          messagingSenderId: "557567714700",
-          appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const storage = firebase.storage();
+<html lang="en">
+<h3>Admin Actions</h3>
+<button id="clearSession" class="btn" style="background:#555">Clear MPIN sessions</button>
+<div class="small" style="margin-top:8px">Note: This admin page is a simple admin UI. For stronger security, integrate Firebase Authentication and protect this page server-side.</div>
+</div>
 
-        function addUpdate() {
-            const t = document.getElementById('update-title').value;
-            const txt = document.getElementById('update-text').value;
-            if(!t||!txt) { alert('Fill all fields'); return; }
-            db.ref('updates').push({ title:t, text:txt, date:new Date().toLocaleString() });
-            alert('Update added!');
-        }
-        function addCal() {
-            const t = document.getElementById('event-title').value;
-            const d = document.getElementById('event-date').value;
-            const desc = document.getElementById('event-desc').value;
-            if(!t||!d) { alert('Fill all fields'); return; }
-            db.ref('calendar').push({ title:t, date:d, description:desc });
-            alert('Event Added!');
-        }
-        function addGallery() {
-            const f = document.getElementById('gallery-img').files[0];
-            if(!f) return alert('Pick an image');
-            const ref = storage.ref('gallery/' + Date.now() + '_' + f.name);
-            ref.put(f).then(snap => ref.getDownloadURL().then(url=>{
-                db.ref('gallery').push({url:url});
-                document.querySelector('.gallery-preview').innerHTML += `<img src="${url}" />`;
-                alert('Image uploaded!');
-            }));
-        }
-    </script>
+
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script>
+var firebaseConfig = {
+apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+authDomain: "school-test-4b350.firebaseapp.com",
+projectId: "school-test-4b350",
+storageBucket: "school-test-4b350.firebasestorage.app",
+messagingSenderId: "557567714700",
+appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+
+// Add update
+document.getElementById('addUpdate').addEventListener('click',async ()=>{
+const t = document.getElementById('updTitle').value.trim();
+const b = document.getElementById('updBody').value.trim();
+if(!t || !b) return document.getElementById('updMsg').innerText='Please fill title and body.';
+document.getElementById('updMsg').innerText='Publishing...';
+try{
+await db.collection('updates').add({title:t,body:b,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('updMsg').innerText='Published.';
+document.getElementById('updTitle').value='';document.getElementById('updBody').value='';
+}catch(e){document.getElementById('updMsg').innerText='Error: '+e.message}
+});
+
+
+// Add event
+document.getElementById('addEvent').addEventListener('click',async ()=>{
+const t = document.getElementById('evTitle').value.trim();
+const d = document.getElementById('evDate').value;
+const n = document.getElementById('evNote').value.trim();
+if(!t || !d) return document.getElementById('evMsg').innerText='Please add title and date.';
+document.getElementById('evMsg').innerText='Adding...';
+try{
+const dateObj = new Date(d+'T00:00:00');
+await db.collection('events').add({title:t,date:firebase.firestore.Timestamp.fromDate(dateObj),note:n,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('evMsg').innerText='Event added.';
+document.getElementById('evTitle').value='';document.getElementById('evDate').value='';document.getElementById('evNote').value='';
+}catch(e){document.getElementById('evMsg').innerText='Error: '+e.message}
+});
+
+
+// Upload photo
+document.getElementById('uploadPhoto').addEventListener('click',async ()=>{
+const fileIn = document.getElementById('photoFile');
+const caption = document.getElementById('photoCaption').value.trim();
+if(!fileIn.files.length) return document.getElementById('photoMsg').innerText='Choose a photo first.';
+const file = fileIn.files[0];
+const id = Date.now() + '_' + file.name.replace(/\s/g,'_');
+document.getElementById('photoMsg').innerText='Uploading...';
+try{
+const ref = storage.ref('gallery/'+id);
+await ref.put(file);
+const url = await ref.getDownloadURL();
+await db.collection('gallery').add({name:caption || file.name,url:url,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('photoMsg').innerText='Uploaded.';
+document.getElementById('photoFile').value='';document.getElementById('photoCaption').value='';
+}catch(e){document.getElementById('photoMsg').innerText='Error: '+e.message}
+});
+
+
+document.getElementById('clearSession').addEventListener('click',()=>{
+// Clear unlocked MPIN from all tabs (only affects sessionStorage on this browser)
+sessionStorage.removeItem('mpinUnlocked');
+alert('Cleared session. Students will need MPIN again.');
+});
+</script>
 </body>
 </html>
+<!-- end admin.html -->
