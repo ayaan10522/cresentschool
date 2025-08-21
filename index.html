@@ -59,3 +59,93 @@ footer{padding:12px;text-align:center;color:#5a6c58}
   
 <!doctype html/>
 
+
+  <html lang="en">
+<h3>Admin Actions</h3>
+<button id="clearSession" class="btn" style="background:#555">Clear MPIN sessions</button>
+<div class="small" style="margin-top:8px">Note: This admin page is a simple admin UI. For stronger security, integrate Firebase Authentication and protect this page server-side.</div>
+</div>
+
+
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script>
+var firebaseConfig = {
+apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+authDomain: "school-test-4b350.firebaseapp.com",
+projectId: "school-test-4b350",
+storageBucket: "school-test-4b350.firebasestorage.app",
+messagingSenderId: "557567714700",
+appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+
+// Add update
+document.getElementById('addUpdate').addEventListener('click',async ()=>{
+const t = document.getElementById('updTitle').value.trim();
+const b = document.getElementById('updBody').value.trim();
+if(!t || !b) return document.getElementById('updMsg').innerText='Please fill title and body.';
+document.getElementById('updMsg').innerText='Publishing...';
+try{
+await db.collection('updates').add({title:t,body:b,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('updMsg').innerText='Published.';
+document.getElementById('updTitle').value='';document.getElementById('updBody').value='';
+}catch(e){document.getElementById('updMsg').innerText='Error: '+e.message}
+});
+
+
+// Add event
+document.getElementById('addEvent').addEventListener('click',async ()=>{
+const t = document.getElementById('evTitle').value.trim();
+const d = document.getElementById('evDate').value;
+const n = document.getElementById('evNote').value.trim();
+if(!t || !d) return document.getElementById('evMsg').innerText='Please add title and date.';
+document.getElementById('evMsg').innerText='Adding...';
+try{
+const dateObj = new Date(d+'T00:00:00');
+await db.collection('events').add({title:t,date:firebase.firestore.Timestamp.fromDate(dateObj),note:n,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('evMsg').innerText='Event added.';
+document.getElementById('evTitle').value='';document.getElementById('evDate').value='';document.getElementById('evNote').value='';
+}catch(e){document.getElementById('evMsg').innerText='Error: '+e.message}
+});
+
+
+// Upload photo
+document.getElementById('uploadPhoto').addEventListener('click',async ()=>{
+const fileIn = document.getElementById('photoFile');
+const caption = document.getElementById('photoCaption').value.trim();
+if(!fileIn.files.length) return document.getElementById('photoMsg').innerText='Choose a photo first.';
+const file = fileIn.files[0];
+const id = Date.now() + '_' + file.name.replace(/\s/g,'_');
+document.getElementById('photoMsg').innerText='Uploading...';
+try{
+const ref = storage.ref('gallery/'+id);
+await ref.put(file);
+const url = await ref.getDownloadURL();
+await db.collection('gallery').add({name:caption || file.name,url:url,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+document.getElementById('photoMsg').innerText='Uploaded.';
+document.getElementById('photoFile').value='';document.getElementById('photoCaption').value='';
+}catch(e){document.getElementById('photoMsg').innerText='Error: '+e.message}
+});
+
+
+document.getElementById('clearSession').addEventListener('click',()=>{
+// Clear unlocked MPIN from all tabs (only affects sessionStorage on this browser)
+sessionStorage.removeItem('mpinUnlocked');
+alert('Cleared session. Students will need MPIN again.');
+});
+</script>
+</body>
+</html>
+<!-- end admin.html -->
+
+
+
+
