@@ -1,123 +1,71 @@
-<!DOCTYPE html>
-<html>
+<!--
+Crescent School - Single-file package (two HTML files in one document)
+INSTRUCTIONS:
+1) Save the section starting with "<!-- index.html -->" up to "<!-- end index.html -->" as file named: index.html
+2) Save the section starting with "<!-- admin.html -->" up to "<!-- end admin.html -->" as file named: admin.html
+3) Place the school logo image you uploaded as: logo.png in the same folder as these files.
+4) You gave Firebase config in the request; it's already filled in inside both files. When you want to use a different Firebase project, replace the firebaseConfig object.
+5) MPIN is set to 123456 (you can change it inside the JS variable `MPIN`).
+6) Open index.html in the browser. To access admin, open admin.html in the browser. For production use, secure admin with proper authentication.
+
+
+This package uses Firebase Firestore + Storage and the Firebase v8 CDN (namespaced) for simplicity.
+-->
+
+
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Crescent School App</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #F9FDFB; margin: 0; color: #366a29; }
-        .header { background: #A3BE63; padding: 16px; text-align: center; }
-        .header img { height: 64px; }
-        .main { max-width: 500px; margin: 24px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0002; padding: 20px; }
-        .tabs { display: flex; justify-content: space-around; margin-top: 16px; }
-        .tab-btn { flex: 1; padding: 12px; cursor: pointer; border-radius: 8px 8px 0 0; border: none; background: #ECF2E0; font-size: 1em; }
-        .tab-btn.active { background: #A3BE63; color: #fff; font-weight: bold; }
-        .section { display: none; }
-        .section.active { display: block; }
-        .login { text-align: center; padding: 100px 0; }
-        .login input[type=password] { padding: 10px; font-size: 1.1em; width: 150px; }
-        .login button { background: #A3BE63; color: #fff; padding: 10px 28px; border: none; border-radius: 6px; font-size: 1em; }
-        .update, .calendar-item { margin: 16px 0; padding: 14px; border-bottom: 1px solid #eee; }
-        .gallery-list img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 10px #0001; }
-        @media (max-width: 600px) { .main { margin: 0; border-radius: 0; } }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crescent School - App</title>
+<style>
+:root{--green:#2f6b3d;--gold:#d4b85a;--bg:#f7faf3}
+body{font-family:Inter,system-ui,Arial;margin:0;background:var(--bg);color:#103017}
+header{background:linear-gradient(90deg,rgba(47,107,61,0.95),rgba(212,184,90,0.95));color:#fff;padding:18px 22px;display:flex;align-items:center;gap:14px}
+header img{height:56px;border-radius:10px;border:3px solid rgba(255,255,255,0.18)}
+.container{max-width:980px;margin:28px auto;padding:18px}
+.card{background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(16,48,23,0.06);padding:18px;margin-bottom:18px}
+nav{display:flex;gap:12px}
+.nav-btn{padding:10px 14px;border-radius:10px;background:transparent;border:2px solid rgba(47,107,61,0.12);cursor:pointer}
+.nav-btn.active{background:var(--green);color:#fff;border:none}
+.mpin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:72vh}
+.mpin-input{font-size:20px;padding:12px;border-radius:10px;border:2px solid #e6e6e6;width:220px;text-align:center}
+.big-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.updates-item{border-left:6px solid var(--gold);padding:12px;margin-bottom:10px;border-radius:8px}
+.calendar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gallery-grid img{width:100%;height:120px;object-fit:cover;border-radius:8px}
+footer{padding:12px;text-align:center;color:#5a6c58}
+@media(max-width:600px){.gallery-grid{grid-template-columns:repeat(2,1fr)}header img{height:46px}}
+</style>
 </head>
 <body>
-    <div class="header">
-        <img src="images-1.jpg" alt="Crescent School Logo">
-        <h2>Crescent School</h2>
-    </div>
-    <div class="main" id="main-content">
-        <div class="login" id="pin-login">
-            <h3>Enter MPIN to continue</h3>
-            <input type="password" id="mpin" maxlength="6" placeholder="MPIN" /><br><br>
-            <button onclick="checkMPIN()">Login</button>
-            <div id="mpin-error" style="color:red;"></div>
-        </div>
-    </div>
+<header>
+<img src="logo.png" alt="logo" id="logoImg">
+<div>
+<div style="font-weight:800;font-size:18px">Crescent School</div>
+<div style="font-size:13px;opacity:.9">Official Student App</div>
+</div>
+</header>
 
-    <!-- Firebase JS SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-storage-compat.js"></script>
-    <!-- Main App JS -->
-    <script>
-        // Firebase config
-        const firebaseConfig = {
-          apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-          authDomain: "school-test-4b350.firebaseapp.com",
-          projectId: "school-test-4b350",
-          storageBucket: "school-test-4b350.appspot.com",
-          messagingSenderId: "557567714700",
-          appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const storage = firebase.storage();
 
-        // MPIN logic
-        function checkMPIN() {
-            const pin = document.getElementById('mpin').value;
-            if(pin === "123456") {
-                loadApp();
-            } else {
-                document.getElementById('mpin-error').textContent = 'Incorrect MPIN!';
-            }
-        }
+<div class="container">
+<div id="mpinScreen" class="card mpin-screen">
+<div class="big-title">Enter MPIN to continue</div>
+<input id="mpinInput" class="mpin-input" type="password" placeholder="MPIN">
+<div style="margin-top:14px">
+<button id="mpinBtn" class="nav-btn">Unlock</button>
+</div>
+<div style="margin-top:12px;color:#6b6b6b;font-size:13px">Use MPIN: <strong>123456</strong></div>
+</div>
 
-        // Main interface
-        function loadApp() {
-            document.getElementById('main-content').innerHTML = `
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="showSection(0)">Updates</button>
-                    <button class="tab-btn" onclick="showSection(1)">Calendar</button>
-                    <button class="tab-btn" onclick="showSection(2)">Gallery</button>
-                </div>
-                <div class="section active" id="updates"></div>
-                <div class="section" id="calendar"></div>
-                <div class="section" id="gallery"><div class="gallery-list"></div></div>
-            `;
-            loadUpdates(); loadCalendar(); loadGallery();
-        }
 
-        // Tabs functionality
-        function showSection(idx) {
-            document.querySelectorAll('.tab-btn').forEach((btn,i)=>btn.classList.toggle('active',i===idx));
-            document.querySelectorAll('.section').forEach((sec,i)=>sec.classList.toggle('active',i===idx));
-        }
-
-        // Fetch Updates
-        function loadUpdates() {
-            db.ref('updates').on('value', snap => {
-                const cont = document.getElementById('updates');
-                cont.innerHTML = '<h3>Latest Updates</h3>';
-                const vals = snap.val();
-                if(vals) Object.values(vals).reverse().forEach(upd=>{
-                    cont.innerHTML += `<div class="update"><b>${upd.title}</b><br>${upd.text}<br><i>${upd.date}</i></div>`;
-                });
-            });
-        }
-        // Fetch Calendar
-        function loadCalendar() {
-            db.ref('calendar').on('value', snap => {
-                const cont = document.getElementById('calendar');
-                cont.innerHTML = '<h3>School Calendar</h3>';
-                const vals = snap.val();
-                if(vals) Object.values(vals).sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
-                    cont.innerHTML += `<div class="calendar-item"><b>${ev.title}</b> <span style="float:right">${ev.date}</span><br>${ev.description||''}</div>`;
-                });
-            });
-        }
-        // Fetch Gallery
-        function loadGallery() {
-            db.ref('gallery').on('value', snap => {
-                const cont = document.querySelector('.gallery-list');
-                cont.innerHTML = '';
-                const vals = snap.val();
-                if(vals) Object.values(vals).reverse().forEach(img=>{
-                    cont.innerHTML += `<img src="${img.url}" alt="Gallery Image">`;
-                });
-            });
-        }
-    </script>
-</body>
+<div id="appScreen" style="display:none">
+<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap">
+<div>
+<div style="font-weight:800;font-size:22px">Welcome to Crescent School</div>
+<div style="opacity:.85;margin-top:4px">See updates, calendar events and the gallery below.</div>
+</div>
 </html>
