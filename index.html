@@ -1,93 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crescent School | Student Portal</title>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crescent School - Student Portal</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #0b2c5d, #123f7a);
-      color: #fff;
+      font-family: Arial, sans-serif;
+      background: #f8fff8;
+      color: #333;
     }
     header {
-      text-align: center;
-      padding: 20px;
-      background: #0b2c5d;
-      font-size: 24px;
+      background: #006400;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header img {
+      height: 50px;
+    }
+    nav a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
       font-weight: bold;
-      color: gold;
     }
-    .login-box, .dashboard {
-      max-width: 500px;
-      margin: 80px auto;
-      background: rgba(255, 255, 255, 0.1);
+    nav a:hover {
+      text-decoration: underline;
+    }
+    section {
       padding: 30px;
-      border-radius: 15px;
-      text-align: center;
-      backdrop-filter: blur(10px);
     }
-    input {
-      padding: 12px;
-      width: 80%;
-      border-radius: 10px;
-      border: none;
-      margin: 10px 0;
-      font-size: 16px;
+    h2 {
+      color: #006400;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
     }
-    button {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 10px;
-      background: gold;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover { background: #e0c200; }
     .card {
-      background: rgba(255, 255, 255, 0.15);
+      background: #fff;
+      padding: 20px;
       margin: 15px 0;
-      padding: 15px;
-      border-radius: 12px;
-      text-align: left;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    h2 { color: gold; }
+    footer {
+      background: #006400;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
-  <header>🎓 Crescent School - Student Portal</header>
-  
-  <div class="login-box" id="loginBox">
-    <h2>Enter MPIN</h2>
-    <input type="password" id="studentPin" placeholder="Enter MPIN" />
-    <br/>
-    <button onclick="studentLogin()">Login</button>
-  </div>
+  <header>
+    <img src="logo.png" alt="Crescent School Logo">
+    <nav>
+      <a href="#updates">Updates</a>
+      <a href="#notice">Notice</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#calendar">Calendar</a>
+    </nav>
+  </header>
 
-  <div class="dashboard" id="studentDashboard" style="display:none;">
-    <h2>Welcome Students 👋</h2>
-    <div class="card">
-      <h3>📢 Updates</h3>
-      <ul id="updatesList"></ul>
-    </div>
-    <div class="card">
-      <h3>📜 Notices</h3>
-      <ul id="noticesList"></ul>
-    </div>
-    <div class="card">
-      <h3>📅 Calendar</h3>
-      <ul id="calendarList"></ul>
-    </div>
-    <div class="card">
-      <h3>🖼 Gallery</h3>
-      <div id="galleryList"></div>
-    </div>
-  </div>
+  <section id="updates">
+    <h2>Updates</h2>
+    <div class="card" id="updates-list">No updates yet.</div>
+  </section>
 
+  <section id="notice">
+    <h2>Notice</h2>
+    <div class="card" id="notice-list">No notices yet.</div>
+  </section>
+
+  <section id="gallery">
+    <h2>Gallery</h2>
+    <div class="card" id="gallery-list">No images yet.</div>
+  </section>
+
+  <section id="calendar">
+    <h2>Calendar</h2>
+    <div class="card" id="calendar-list">No events yet.</div>
+  </section>
+
+  <footer>
+    &copy; 2025 Crescent School | Student Portal
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
@@ -97,45 +101,24 @@
       messagingSenderId: "557567714700",
       appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
     };
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function studentLogin() {
-      const pin = document.getElementById("studentPin").value;
-      if (pin === "123456") {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("studentDashboard").style.display = "block";
-        loadData();
-      } else {
-        alert("Wrong MPIN ❌");
-      }
-    }
-
-    function loadData() {
-      db.collection("updates").onSnapshot(snapshot => {
-        let list = document.getElementById("updatesList");
-        list.innerHTML = "";
-        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().text}</li>`);
-      });
-
-      db.collection("notices").onSnapshot(snapshot => {
-        let list = document.getElementById("noticesList");
-        list.innerHTML = "";
-        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().text}</li>`);
-      });
-
-      db.collection("calendar").onSnapshot(snapshot => {
-        let list = document.getElementById("calendarList");
-        list.innerHTML = "";
-        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().event}</li>`);
-      });
-
-      db.collection("gallery").onSnapshot(snapshot => {
-        let gallery = document.getElementById("galleryList");
-        gallery.innerHTML = "";
-        snapshot.forEach(doc => gallery.innerHTML += `<img src="${doc.data().url}" style="width:100px;margin:5px;border-radius:8px"/>`);
+    function loadData(collection, elementId) {
+      db.collection(collection).onSnapshot(snapshot => {
+        let html = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          html += `<p><b>${data.title || data.date || "Item"}:</b> ${data.description || data.event || ""}</p>`;
+        });
+        document.getElementById(elementId).innerHTML = html || "No data yet.";
       });
     }
+
+    loadData("updates", "updates-list");
+    loadData("notice", "notice-list");
+    loadData("gallery", "gallery-list");
+    loadData("calendar", "calendar-list");
   </script>
 </body>
 </html>
