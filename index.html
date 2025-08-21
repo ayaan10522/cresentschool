@@ -1,124 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crescent School - Student Portal</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f8fff8;
-      color: #333;
-    }
-    header {
-      background: #006400;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header img {
-      height: 50px;
-    }
-    nav a {
-      margin: 0 15px;
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    section {
-      padding: 30px;
-    }
-    h2 {
-      color: #006400;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 5px;
-    }
-    .card {
-      background: #fff;
-      padding: 20px;
-      margin: 15px 0;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    footer {
-      background: #006400;
-      color: white;
-      text-align: center;
-      padding: 15px;
-      margin-top: 40px;
-    }
-  </style>
+    <title>Crescent School App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #F9FDFB; margin: 0; color: #366a29; }
+        .header { background: #A3BE63; padding: 16px; text-align: center; }
+        .header img { height: 64px; }
+        .main { max-width: 500px; margin: 24px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0002; padding: 20px; }
+        .tabs { display: flex; justify-content: space-around; margin-top: 16px; }
+        .tab-btn { flex: 1; padding: 12px; cursor: pointer; border-radius: 8px 8px 0 0; border: none; background: #ECF2E0; font-size: 1em; }
+        .tab-btn.active { background: #A3BE63; color: #fff; font-weight: bold; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .login { text-align: center; padding: 100px 0; }
+        .login input[type=password] { padding: 10px; font-size: 1.1em; width: 150px; }
+        .login button { background: #A3BE63; color: #fff; padding: 10px 28px; border: none; border-radius: 6px; font-size: 1em; }
+        .update, .calendar-item { margin: 16px 0; padding: 14px; border-bottom: 1px solid #eee; }
+        .gallery-list img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 10px #0001; }
+        @media (max-width: 600px) { .main { margin: 0; border-radius: 0; } }
+    </style>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="Crescent School Logo">
-    <nav>
-      <a href="#updates">Updates</a>
-      <a href="#notice">Notice</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#calendar">Calendar</a>
-    </nav>
-  </header>
+    <div class="header">
+        <img src="images-1.jpg" alt="Crescent School Logo">
+        <h2>Crescent School</h2>
+    </div>
+    <div class="main" id="main-content">
+        <div class="login" id="pin-login">
+            <h3>Enter MPIN to continue</h3>
+            <input type="password" id="mpin" maxlength="6" placeholder="MPIN" /><br><br>
+            <button onclick="checkMPIN()">Login</button>
+            <div id="mpin-error" style="color:red;"></div>
+        </div>
+    </div>
 
-  <section id="updates">
-    <h2>Updates</h2>
-    <div class="card" id="updates-list">No updates yet.</div>
-  </section>
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-storage-compat.js"></script>
+    <!-- Main App JS -->
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+          apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+          authDomain: "school-test-4b350.firebaseapp.com",
+          projectId: "school-test-4b350",
+          storageBucket: "school-test-4b350.appspot.com",
+          messagingSenderId: "557567714700",
+          appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
 
-  <section id="notice">
-    <h2>Notice</h2>
-    <div class="card" id="notice-list">No notices yet.</div>
-  </section>
+        // MPIN logic
+        function checkMPIN() {
+            const pin = document.getElementById('mpin').value;
+            if(pin === "123456") {
+                loadApp();
+            } else {
+                document.getElementById('mpin-error').textContent = 'Incorrect MPIN!';
+            }
+        }
 
-  <section id="gallery">
-    <h2>Gallery</h2>
-    <div class="card" id="gallery-list">No images yet.</div>
-  </section>
+        // Main interface
+        function loadApp() {
+            document.getElementById('main-content').innerHTML = `
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="showSection(0)">Updates</button>
+                    <button class="tab-btn" onclick="showSection(1)">Calendar</button>
+                    <button class="tab-btn" onclick="showSection(2)">Gallery</button>
+                </div>
+                <div class="section active" id="updates"></div>
+                <div class="section" id="calendar"></div>
+                <div class="section" id="gallery"><div class="gallery-list"></div></div>
+            `;
+            loadUpdates(); loadCalendar(); loadGallery();
+        }
 
-  <section id="calendar">
-    <h2>Calendar</h2>
-    <div class="card" id="calendar-list">No events yet.</div>
-  </section>
+        // Tabs functionality
+        function showSection(idx) {
+            document.querySelectorAll('.tab-btn').forEach((btn,i)=>btn.classList.toggle('active',i===idx));
+            document.querySelectorAll('.section').forEach((sec,i)=>sec.classList.toggle('active',i===idx));
+        }
 
-  <footer>
-    &copy; 2025 Crescent School | Student Portal
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-      authDomain: "school-test-4b350.firebaseapp.com",
-      projectId: "school-test-4b350",
-      storageBucket: "school-test-4b350.firebasestorage.app",
-      messagingSenderId: "557567714700",
-      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    function loadData(collection, elementId) {
-      db.collection(collection).onSnapshot(snapshot => {
-        let html = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          html += `<p><b>${data.title || data.date || "Item"}:</b> ${data.description || data.event || ""}</p>`;
-        });
-        document.getElementById(elementId).innerHTML = html || "No data yet.";
-      });
-    }
-
-    loadData("updates", "updates-list");
-    loadData("notice", "notice-list");
-    loadData("gallery", "gallery-list");
-    loadData("calendar", "calendar-list");
-  </script>
+        // Fetch Updates
+        function loadUpdates() {
+            db.ref('updates').on('value', snap => {
+                const cont = document.getElementById('updates');
+                cont.innerHTML = '<h3>Latest Updates</h3>';
+                const vals = snap.val();
+                if(vals) Object.values(vals).reverse().forEach(upd=>{
+                    cont.innerHTML += `<div class="update"><b>${upd.title}</b><br>${upd.text}<br><i>${upd.date}</i></div>`;
+                });
+            });
+        }
+        // Fetch Calendar
+        function loadCalendar() {
+            db.ref('calendar').on('value', snap => {
+                const cont = document.getElementById('calendar');
+                cont.innerHTML = '<h3>School Calendar</h3>';
+                const vals = snap.val();
+                if(vals) Object.values(vals).sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
+                    cont.innerHTML += `<div class="calendar-item"><b>${ev.title}</b> <span style="float:right">${ev.date}</span><br>${ev.description||''}</div>`;
+                });
+            });
+        }
+        // Fetch Gallery
+        function loadGallery() {
+            db.ref('gallery').on('value', snap => {
+                const cont = document.querySelector('.gallery-list');
+                cont.innerHTML = '';
+                const vals = snap.val();
+                if(vals) Object.values(vals).reverse().forEach(img=>{
+                    cont.innerHTML += `<img src="${img.url}" alt="Gallery Image">`;
+                });
+            });
+        }
+    </script>
 </body>
 </html>
