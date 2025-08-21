@@ -1,83 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crescent School Portal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module" src="app.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crescent School | Student Portal</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #0b2c5d, #123f7a);
+      color: #fff;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #0b2c5d;
+      font-size: 24px;
+      font-weight: bold;
+      color: gold;
+    }
+    .login-box, .dashboard {
+      max-width: 500px;
+      margin: 80px auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+    input {
+      padding: 12px;
+      width: 80%;
+      border-radius: 10px;
+      border: none;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      background: gold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #e0c200; }
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: left;
+    }
+    h2 { color: gold; }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-green-700 to-yellow-400 min-h-screen flex items-center justify-center">
-  <!-- Login Page -->
-  <div id="loginPage" class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center">
-    <h1 class="text-3xl font-bold text-green-700 mb-4">Crescent School</h1>
-    <p class="text-gray-600 mb-6">Enter your MPIN to continue</p>
-    <input id="mpinInput" type="password" placeholder="Enter MPIN"
-      class="w-full px-4 py-3 rounded-xl border-2 border-green-500 focus:outline-none focus:ring-2 focus:ring-green-600 mb-4" />
-    <button onclick="checkMpin()" 
-      class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition">Login</button>
-    <p id="errorMsg" class="text-red-500 mt-3 hidden">Invalid MPIN</p>
+<body>
+  <header>🎓 Crescent School - Student Portal</header>
+  
+  <div class="login-box" id="loginBox">
+    <h2>Enter MPIN</h2>
+    <input type="password" id="studentPin" placeholder="Enter MPIN" />
+    <br/>
+    <button onclick="studentLogin()">Login</button>
   </div>
 
-  <!-- Student Page -->
-  <div id="studentPage" class="hidden w-full p-6">
-    <h2 class="text-3xl font-bold text-center text-white mb-6">Welcome Student 🎓</h2>
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      
-      <!-- Updates -->
-      <div class="bg-white rounded-xl p-6 shadow-lg">
-        <h3 class="text-xl font-bold text-green-600 mb-3">📢 Updates</h3>
-        <ul id="updatesList" class="space-y-2"></ul>
-      </div>
-
-      <!-- Notices -->
-      <div class="bg-white rounded-xl p-6 shadow-lg">
-        <h3 class="text-xl font-bold text-yellow-600 mb-3">📜 Notices</h3>
-        <ul id="noticesList" class="space-y-2"></ul>
-      </div>
-
-      <!-- Calendar -->
-      <div class="bg-white rounded-xl p-6 shadow-lg">
-        <h3 class="text-xl font-bold text-green-600 mb-3">📅 Calendar</h3>
-        <div id="calendarList" class="space-y-2"></div>
-      </div>
-
-      <!-- Gallery -->
-      <div class="bg-white rounded-xl p-6 shadow-lg md:col-span-2 lg:col-span-3">
-        <h3 class="text-xl font-bold text-yellow-600 mb-3">🖼️ Gallery</h3>
-        <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-      </div>
+  <div class="dashboard" id="studentDashboard" style="display:none;">
+    <h2>Welcome Students 👋</h2>
+    <div class="card">
+      <h3>📢 Updates</h3>
+      <ul id="updatesList"></ul>
+    </div>
+    <div class="card">
+      <h3>📜 Notices</h3>
+      <ul id="noticesList"></ul>
+    </div>
+    <div class="card">
+      <h3>📅 Calendar</h3>
+      <ul id="calendarList"></ul>
+    </div>
+    <div class="card">
+      <h3>🖼 Gallery</h3>
+      <div id="galleryList"></div>
     </div>
   </div>
 
-  <!-- Admin Page -->
-  <div id="adminPage" class="hidden w-full p-6">
-    <h2 class="text-3xl font-bold text-center text-white mb-6">Welcome Admin 🛠️</h2>
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Manage Updates -->
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <h3 class="font-bold text-green-600 mb-3">Manage Updates</h3>
-        <input id="updateInput" placeholder="Add new update..." class="w-full border p-2 rounded mb-2"/>
-        <button onclick="addUpdate()" class="bg-green-600 text-white px-4 py-2 rounded">Add</button>
-        <ul id="adminUpdatesList" class="mt-3 space-y-2"></ul>
-      </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+      authDomain: "school-test-4b350.firebaseapp.com",
+      projectId: "school-test-4b350",
+      storageBucket: "school-test-4b350.firebasestorage.app",
+      messagingSenderId: "557567714700",
+      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-      <!-- Manage Notices -->
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <h3 class="font-bold text-yellow-600 mb-3">Manage Notices</h3>
-        <input id="noticeInput" placeholder="Add new notice..." class="w-full border p-2 rounded mb-2"/>
-        <button onclick="addNotice()" class="bg-yellow-600 text-white px-4 py-2 rounded">Add</button>
-        <ul id="adminNoticesList" class="mt-3 space-y-2"></ul>
-      </div>
+    function studentLogin() {
+      const pin = document.getElementById("studentPin").value;
+      if (pin === "123456") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("studentDashboard").style.display = "block";
+        loadData();
+      } else {
+        alert("Wrong MPIN ❌");
+      }
+    }
 
-      <!-- Manage Gallery -->
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <h3 class="font-bold text-green-600 mb-3">Manage Gallery</h3>
-        <input id="galleryInput" placeholder="Image URL..." class="w-full border p-2 rounded mb-2"/>
-        <button onclick="addGallery()" class="bg-green-600 text-white px-4 py-2 rounded">Add</button>
-        <div id="adminGalleryList" class="mt-3 grid grid-cols-2 gap-2"></div>
-      </div>
-    </div>
-  </div>
+    function loadData() {
+      db.collection("updates").onSnapshot(snapshot => {
+        let list = document.getElementById("updatesList");
+        list.innerHTML = "";
+        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().text}</li>`);
+      });
+
+      db.collection("notices").onSnapshot(snapshot => {
+        let list = document.getElementById("noticesList");
+        list.innerHTML = "";
+        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().text}</li>`);
+      });
+
+      db.collection("calendar").onSnapshot(snapshot => {
+        let list = document.getElementById("calendarList");
+        list.innerHTML = "";
+        snapshot.forEach(doc => list.innerHTML += `<li>${doc.data().event}</li>`);
+      });
+
+      db.collection("gallery").onSnapshot(snapshot => {
+        let gallery = document.getElementById("galleryList");
+        gallery.innerHTML = "";
+        snapshot.forEach(doc => gallery.innerHTML += `<img src="${doc.data().url}" style="width:100px;margin:5px;border-radius:8px"/>`);
+      });
+    }
+  </script>
 </body>
 </html>
