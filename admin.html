@@ -1,189 +1,83 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crescent School - Admin Portal</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #fffdf8;
-      color: #333;
-    }
-    header {
-      background: #004d00;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header img {
-      height: 50px;
-    }
-    nav a {
-      margin: 0 15px;
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    section {
-      padding: 30px;
-    }
-    h2 {
-      color: #004d00;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 5px;
-    }
-    .form-box {
-      background: #f9fff9;
-      padding: 20px;
-      margin: 20px 0;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button {
-      background: #004d00;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #006600;
-    }
-    .card {
-      background: #fff;
-      padding: 20px;
-      margin: 15px 0;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    footer {
-      background: #004d00;
-      color: white;
-      text-align: center;
-      padding: 15px;
-      margin-top: 40px;
-    }
-  </style>
+    <title>Crescent School Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { font-family:'Segoe UI',sans-serif; background:#f7fff4; color:#234013; }
+      .main { max-width:500px; margin:3em auto; background:#fff; border-radius:12px; box-shadow:0 3px 12px #a3be6330; padding:32px;}
+      h2 { color:#5b8d2d;}
+      input,textarea,select,button { width:100%; padding:8px; margin:6px 0 16px 0; border-radius:5px; border:1px solid #a3be63; }
+      label { font-weight:600;}
+      .section { margin-bottom:36px; border-bottom:1px solid #e7efe2; padding-bottom:24px;}
+      .gallery-preview img {max-width:100px;}
+    </style>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="Crescent School Logo">
-    <nav>
-      <a href="#updates">Updates</a>
-      <a href="#notice">Notice</a>
-      <a href="#gallery">Gallery</a>
-      <a href="#calendar">Calendar</a>
-    </nav>
-  </header>
-
-  <section id="updates">
-    <h2>Manage Updates</h2>
-    <div class="form-box">
-      <input type="text" id="update-title" placeholder="Title">
-      <textarea id="update-desc" placeholder="Description"></textarea>
-      <button onclick="addData('updates')">Add Update</button>
+    <div class="main">
+        <h2>Crescent School Admin</h2>
+        <div class="section">
+            <h3>Add Update</h3>
+            <label>Title</label><input id="update-title"><br>
+            <label>Text</label><textarea id="update-text"></textarea><br>
+            <button onclick="addUpdate()">Add Update</button>
+        </div>
+        <div class="section">
+            <h3>Add Calendar Event</h3>
+            <label>Event Title</label><input id="event-title"><br>
+            <label>Date</label><input id="event-date" type="date"><br>
+            <label>Description</label><textarea id="event-desc"></textarea><br>
+            <button onclick="addCal()">Add Event</button>
+        </div>
+        <div class="section">
+            <h3>Add Gallery Photo</h3>
+            <label>Pick photo</label><input type="file" id="gallery-img"><br>
+            <button onclick="addGallery()">Upload Photo</button>
+            <div class="gallery-preview"></div>
+        </div>
     </div>
-    <div id="updates-list"></div>
-  </section>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.2/firebase-storage-compat.js"></script>
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+          apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+          authDomain: "school-test-4b350.firebaseapp.com",
+          projectId: "school-test-4b350",
+          storageBucket: "school-test-4b350.appspot.com",
+          messagingSenderId: "557567714700",
+          appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
 
-  <section id="notice">
-    <h2>Manage Notices</h2>
-    <div class="form-box">
-      <input type="text" id="notice-title" placeholder="Title">
-      <textarea id="notice-desc" placeholder="Description"></textarea>
-      <button onclick="addData('notice')">Add Notice</button>
-    </div>
-    <div id="notice-list"></div>
-  </section>
-
-  <section id="gallery">
-    <h2>Manage Gallery</h2>
-    <div class="form-box">
-      <input type="text" id="gallery-title" placeholder="Image Title">
-      <textarea id="gallery-desc" placeholder="Image URL"></textarea>
-      <button onclick="addData('gallery')">Add Image</button>
-    </div>
-    <div id="gallery-list"></div>
-  </section>
-
-  <section id="calendar">
-    <h2>Manage Calendar</h2>
-    <div class="form-box">
-      <input type="date" id="calendar-date">
-      <textarea id="calendar-event" placeholder="Event Description"></textarea>
-      <button onclick="addData('calendar')">Add Event</button>
-    </div>
-    <div id="calendar-list"></div>
-  </section>
-
-  <footer>
-    &copy; 2025 Crescent School | Admin Portal
-  </footer>
-
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-      authDomain: "school-test-4b350.firebaseapp.com",
-      projectId: "school-test-4b350",
-      storageBucket: "school-test-4b350.firebasestorage.app",
-      messagingSenderId: "557567714700",
-      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    function addData(collection) {
-      let title = document.getElementById(collection + "-title").value;
-      let desc = document.getElementById(collection + "-desc")?.value || "";
-      let date = document.getElementById(collection + "-date")?.value || "";
-      let event = document.getElementById(collection + "-event")?.value || "";
-
-      let data = {};
-      if (collection === "calendar") {
-        data = { date, event };
-      } else {
-        data = { title, description: desc };
-      }
-
-      db.collection(collection).add(data);
-    }
-
-    function loadData(collection, elementId) {
-      db.collection(collection).onSnapshot(snapshot => {
-        let html = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          html += `<div class="card">
-              <p><b>${data.title || data.date}:</b> ${data.description || data.event || ""}</p>
-              <button onclick="removeData('${collection}','${doc.id}')">Remove</button>
-            </div>`;
-        });
-        document.getElementById(elementId).innerHTML = html || "No data yet.";
-      });
-    }
-
-    function removeData(collection, id) {
-      db.collection(collection).doc(id).delete();
-    }
-
-    loadData("updates", "updates-list");
-    loadData("notice", "notice-list");
-    loadData("gallery", "gallery-list");
-    loadData("calendar", "calendar-list");
-  </script>
+        function addUpdate() {
+            const t = document.getElementById('update-title').value;
+            const txt = document.getElementById('update-text').value;
+            if(!t||!txt) { alert('Fill all fields'); return; }
+            db.ref('updates').push({ title:t, text:txt, date:new Date().toLocaleString() });
+            alert('Update added!');
+        }
+        function addCal() {
+            const t = document.getElementById('event-title').value;
+            const d = document.getElementById('event-date').value;
+            const desc = document.getElementById('event-desc').value;
+            if(!t||!d) { alert('Fill all fields'); return; }
+            db.ref('calendar').push({ title:t, date:d, description:desc });
+            alert('Event Added!');
+        }
+        function addGallery() {
+            const f = document.getElementById('gallery-img').files[0];
+            if(!f) return alert('Pick an image');
+            const ref = storage.ref('gallery/' + Date.now() + '_' + f.name);
+            ref.put(f).then(snap => ref.getDownloadURL().then(url=>{
+                db.ref('gallery').push({url:url});
+                document.querySelector('.gallery-preview').innerHTML += `<img src="${url}" />`;
+                alert('Image uploaded!');
+            }));
+        }
+    </script>
 </body>
 </html>
