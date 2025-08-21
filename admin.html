@@ -1,75 +1,42 @@
-<!-- admin.html -->
-catch(e){msg.innerText='Error: '+e.message}
-});
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crescent School - Admin</title>
+<style>
+:root{--green:#2f6b3a;--light-green:#8fbf7e;--gold:#d6b72a}
+body{font-family:Inter, system-ui, Arial;background:#f4fff6;margin:0;padding:18px}
+.wrap{max-width:980px;margin:0 auto}
+header{display:flex;gap:12px;align-items:center}
+header h1{margin:0}
+.card{background:white;padding:16px;border-radius:12px;box-shadow:0 12px 30px rgba(10,20,10,0.06);margin-top:12px}
+label{display:block;margin-top:10px;font-weight:600}
+input,textarea,select{padding:10px;width:100%;border-radius:8px;border:1px solid #ddd}
+button{margin-top:10px;padding:10px 12px;border-radius:8px;border:0;background:var(--green);color:white;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<img src="/logo.png" alt="logo" style="width:60px;height:60px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'">
+<div>
+<h1>Crescent School — Admin</h1>
+<div style="opacity:0.8">/admin — Add updates, events & upload gallery photos</div>
+</div>
+</header>
 
 
-// Add event
-document.getElementById('addEventBtn').addEventListener('click',async ()=>{
-const t = document.getElementById('eventTitle').value.trim();
-const d = document.getElementById('eventDate').value;
-const n = document.getElementById('eventNote').value.trim();
-const msg = document.getElementById('evMsg'); msg.innerText='';
-if(!t || !d) return msg.innerText='Please add title and date.';
-msg.innerText='Adding event...';
-try{
-const dateObj = new Date(d+'T00:00:00');
-await db.collection('events').add({title:t,date:firebase.firestore.Timestamp.fromDate(dateObj),note:n,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-msg.innerText='Event added.'; document.getElementById('eventTitle').value=''; document.getElementById('eventDate').value=''; document.getElementById('eventNote').value='';
-}catch(e){msg.innerText='Error: '+e.message}
-});
+<div class="card">
+<h2>Add an Update</h2>
+<label>Title <input id="updTitle"></label>
+<label>Body <textarea id="updBody" rows="4"></textarea></label>
+<button id="addUpdate">Publish Update</button>
+<div id="updResult" style="margin-top:8px"></div>
+</div>
 
 
-// Upload photo
-const photoInput = document.getElementById('photoInput');
-const previewImg = document.getElementById('previewImg');
-photoInput.addEventListener('change',()=>{
-if(photoInput.files && photoInput.files[0]){
-const url = URL.createObjectURL(photoInput.files[0]); previewImg.src = url; previewImg.style.display='block';
-} else { previewImg.style.display='none'; }
-});
-
-
-document.getElementById('uploadBtn').addEventListener('click',async ()=>{
-const files = photoInput.files; const msg = document.getElementById('photoMsg'); msg.innerText='';
-if(!files || !files.length) return msg.innerText='Please choose a photo.';
-const cap = document.getElementById('photoCaption').value.trim();
-msg.innerText='Uploading...';
-try{
-const file = files[0]; const id = Date.now() + '_' + file.name.replace(/\s/g,'_');
-const ref = storage.ref('gallery/'+id);
-await ref.put(file);
-const url = await ref.getDownloadURL();
-await db.collection('gallery').add({name:cap || file.name,url:url,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-msg.innerText='Uploaded.'; photoInput.value=''; document.getElementById('photoCaption').value=''; previewImg.style.display='none';
-}catch(e){msg.innerText='Error: '+e.message}
-});
-
-
-// Clear local sessions
-document.getElementById('logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem('cs_mpin_ok'); alert('Cleared local student sessions.'); });
-
-
-// Live content preview
-const liveContent = document.getElementById('liveContent');
-function loadLive(){
-liveContent.innerHTML='Loading...';
-Promise.all([
-db.collection('updates').orderBy('createdAt','desc').limit(3).get(),
-db.collection('events').orderBy('date','asc').limit(3).get(),
-db.collection('gallery').orderBy('createdAt','desc').limit(6).get()
-]).then(([u,e,g])=>{
-let html='';
-html += '<div style="margin-bottom:10px"><strong>Latest updates:</strong><br/>' + (u.empty? 'No updates.' : Array.from(u.docs).map(d=>escapeHtml(d.data().title)).join(', ')) + '</div>';
-html += '<div style="margin-bottom:10px"><strong>Upcoming events:</strong><br/>' + (e.empty? 'No events.' : Array.from(e.docs).map(d=>escapeHtml(d.data().title + ' (' + (d.data().date && d.data().date.toDate? d.data().date.toDate().toDateString() : '') + ')')).join(', ')) + '</div>';
-html += '<div><strong>Gallery preview:</strong><br/>' + (g.empty? 'No photos.' : Array.from(g.docs).map(d=>'<img src="'+d.data().url+'" style="height:38px;border-radius:6px;margin:4px">').join('')) + '</div>';
-liveContent.innerHTML = html;
-}).catch(err=>{ liveContent.innerText = 'Error: '+err.message; });
-}
-loadLive();
-
-
-function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-</script>
-</body>
-</html>
-<!-- end admin.html -->
+<div class="card">
+<h2>Add Calendar Event</h2>
+<label>Title <input id="evtTitle"></label>
+<label>Date <input id="evtDate" type="date"></label>
+<label>Type <select id="evtType"><option>General</option><option>Exam</option><option>Holiday</option><option>Sports</option></select></label>
