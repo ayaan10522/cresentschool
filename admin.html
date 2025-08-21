@@ -1,197 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crescent Admin</title>
-<link rel="icon" href="../assets/logo.jpg">
-<style>
-  :root{
-    --green:#0b7d2b; --greenDark:#0a5a22; --gold:#d4af37;
-    --bg:#f3f6f4; --card:#ffffff; --ink:#0f172a; --muted:#94a3b8;
-    --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.08);
-  }
-  *{box-sizing:border-box} html,body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  .center{min-height:100dvh;display:grid;place-items:center;padding:16px}
-  .login{max-width:380px;width:100%;padding:22px;border-radius:22px;background:#fff;box-shadow:var(--shadow);border:1px solid #e8eee9;text-align:center}
-  input{width:100%;padding:12px;border:1px solid #e5efe6;border-radius:12px}
-  button{background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
-  .appbar{position:sticky;top:0;background:linear-gradient(140deg,var(--greenDark),var(--green));color:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;z-index:10}
-  .wrap{max-width:980px;margin:0 auto;padding:16px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .card{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:16px}
-  label{display:block;font-weight:700;margin-top:8px}
-  .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-  .item{background:#f7faf7;border:1px solid #e5efe6;border-radius:14px;padding:10px}
-  .danger{background:#a31212}
-</style>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #dashboard { display: none; }
+    input, button { padding: 8px; margin: 5px 0; }
+    button { cursor: pointer; }
+  </style>
 </head>
 <body>
-
-<!-- Admin MPIN -->
-<div id="lock" class="center">
-  <div class="login">
-    <img src="../assets/logo.jpg" alt="logo" style="width:72px;height:72px;border-radius:999px;border:2px solid var(--gold);margin-bottom:8px">
-    <h2 style="margin:0">Crescent Admin</h2>
-    <p style="margin:.25rem 0 1rem 0;color:#64748b">Enter Admin MPIN</p>
-    <input id="adminPin" type="password" inputmode="numeric" maxlength="6" placeholder="123456">
-    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
-      <button id="unlock">Enter</button>
-    </div>
-  </div>
-</div>
-
-<!-- Admin App -->
-<div id="app" style="display:none">
-  <div class="appbar">
-    <strong>Admin • Crescent School</strong>
-    <div style="margin-left:auto;display:flex;gap:8px">
-      <button id="logout" class="danger">Logout</button>
-    </div>
+  <h1>Admin Login</h1>
+  <div id="loginBox">
+    <input type="password" id="mpin" placeholder="Enter 4-digit MPIN">
+    <button onclick="login()">Login</button>
   </div>
 
-  <div class="wrap">
-    <div class="grid">
-      <!-- Updates -->
-      <div class="card">
-        <h3>🔔 Add Update</h3>
-        <label>Update Text</label>
-        <input id="updText" placeholder="e.g., School reopens on 30 Sept.">
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="addUpdate">Add Update</button>
-          <button id="clearUpdates" class="danger">Clear All</button>
-        </div>
-        <div class="list" id="updatesList"></div>
-      </div>
+  <div id="dashboard">
+    <h2>Post a Notice</h2>
+    <input type="text" id="noticeText" placeholder="Enter notice">
+    <button onclick="addNotice()">Add Notice</button>
 
-      <!-- Calendar -->
-      <div class="card">
-        <h3>📅 Add Calendar Event</h3>
-        <label>Date</label>
-        <input id="evDate" type="date">
-        <label>Title</label>
-        <input id="evTitle" placeholder="e.g., Parent Orientation">
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="addEvent">Add Event</button>
-          <button id="clearEvents" class="danger">Clear All</button>
-        </div>
-        <div class="list" id="eventsList"></div>
-      </div>
-
-      <!-- Gallery -->
-      <div class="card">
-        <h3>🖼️ Add Gallery Photo</h3>
-        <label>Image URL</label>
-        <input id="photoUrl" placeholder="https://...">
-        <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="addPhoto">Add Photo</button>
-          <button id="clearPhotos" class="danger">Clear All</button>
-        </div>
-        <div class="list" id="photosList"></div>
-      </div>
-
-      <!-- Tools -->
-      <div class="card">
-        <h3>⚙️ Tools</h3>
-        <button id="openApp" onclick="window.open('../index.html','_blank')">Open User App</button>
-        <p style="color:#64748b;margin-top:10px">All data is stored on this device using localStorage.</p>
-      </div>
-    </div>
+    <h2>Add Gallery Image</h2>
+    <input type="text" id="imgUrl" placeholder="Enter image URL">
+    <button onclick="addImage()">Add Image</button>
   </div>
-</div>
 
-<script>
-  const DEFAULT_PIN = '123456';
-  const KEY_UPDATES = 'cs_updates';
-  const KEY_EVENTS  = 'cs_events';
-  const KEY_PHOTOS  = 'cs_photos';
-  const get = (k, d)=> JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
-  const set = (k, v)=> localStorage.setItem(k, JSON.stringify(v));
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+      authDomain: "school-test-4b350.firebaseapp.com",
+      projectId: "school-test-4b350",
+      storageBucket: "school-test-4b350.firebasestorage.app",
+      messagingSenderId: "557567714700",
+      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+    };
 
-  // Auth
-  document.getElementById('unlock').onclick = ()=>{
-    if(document.getElementById('adminPin').value === DEFAULT_PIN){
-      document.getElementById('lock').style.display='none';
-      document.getElementById('app').style.display='block';
-      renderAll();
-    } else alert('Wrong MPIN');
-  };
-  document.getElementById('logout').onclick = ()=> location.reload();
+    // Init Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  // Updates
-  const updInput = document.getElementById('updText');
-  document.getElementById('addUpdate').onclick = ()=>{
-    const text = (updInput.value||'').trim();
-    if(!text) return alert('Enter update text');
-    const list = get(KEY_UPDATES, []);
-    list.push({text, time: Date.now()});
-    set(KEY_UPDATES, list);
-    updInput.value='';
-    renderUpdates();
-  };
-  document.getElementById('clearUpdates').onclick = ()=>{
-    if(confirm('Clear ALL updates?')){ localStorage.removeItem(KEY_UPDATES); renderUpdates(); }
-  };
+    // Hardcoded MPIN
+    const ADMIN_PIN = "1234";
 
-  // Events
-  const evDate = document.getElementById('evDate');
-  const evTitle = document.getElementById('evTitle');
-  document.getElementById('addEvent').onclick = ()=>{
-    if(!evDate.value || !evTitle.value.trim()) return alert('Enter date and title');
-    const events = get(KEY_EVENTS, []);
-    events.push({date: evDate.value, title: evTitle.value.trim()});
-    set(KEY_EVENTS, events); evDate.value=''; evTitle.value='';
-    renderEvents();
-  };
-  document.getElementById('clearEvents').onclick = ()=>{
-    if(confirm('Clear ALL events?')){ localStorage.removeItem(KEY_EVENTS); renderEvents(); }
-  };
+    function login() {
+      const pin = document.getElementById("mpin").value;
+      if (pin === ADMIN_PIN) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+      } else {
+        alert("Wrong MPIN!");
+      }
+    }
 
-  // Photos
-  const photoUrl = document.getElementById('photoUrl');
-  document.getElementById('addPhoto').onclick = ()=>{
-    const url = (photoUrl.value||'').trim();
-    if(!/^https?:\/\//i.test(url)) return alert('Enter a valid image URL (http/https)');
-    const photos = get(KEY_PHOTOS, []);
-    photos.push(url); set(KEY_PHOTOS, photos); photoUrl.value=''; renderPhotos();
-  };
-  document.getElementById('clearPhotos').onclick = ()=>{
-    if(confirm('Clear ALL photos?')){ localStorage.removeItem(KEY_PHOTOS); renderPhotos(); }
-  };
+    function addNotice() {
+      const text = document.getElementById("noticeText").value;
+      if (text.trim() === "") return alert("Enter a notice!");
+      db.collection("updates").add({ text })
+        .then(() => alert("Notice added!"));
+    }
 
-  // Renderers
-  function renderUpdates(){
-    const list = document.getElementById('updatesList');
-    const data = get(KEY_UPDATES, []);
-    list.innerHTML = '';
-    data.slice().reverse().forEach((u,idx)=>{
-      const d = new Date(u.time||Date.now());
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<b>${d.toLocaleString()}</b><div>${u.text}</div>`;
-      list.appendChild(el);
-    });
-  }
-  function renderEvents(){
-    const list = document.getElementById('eventsList');
-    const data = get(KEY_EVENTS, []);
-    list.innerHTML = '';
-    data.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<b>${ev.date}</b> — ${ev.title}`;
-      list.appendChild(el);
-    });
-  }
-  function renderPhotos(){
-    const list = document.getElementById('photosList');
-    const data = get(KEY_PHOTOS, []);
-    list.innerHTML = '';
-    data.forEach(url=>{
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
-      list.appendChild(el);
-    });
-  }
-  function renderAll(){ renderUpdates(); renderEvents(); renderPhotos(); }
-</script>
+    function addImage() {
+      const url = document.getElementById("imgUrl").value;
+      if (url.trim() === "") return alert("Enter an image URL!");
+      db.collection("gallery").add({ url })
+        .then(() => alert("Image added!"));
+    }
+  </script>
 </body>
 </html>
