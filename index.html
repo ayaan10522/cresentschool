@@ -61,6 +61,8 @@
 </div>
 
 <!-- App -->
+  <div id="displayData"></div>
+
 <div id="app" class="hidden">
   <div class="appbar">
     <img src="assets/logo.jpg" alt="">
@@ -228,95 +230,5 @@
   }
   function renderAll(){ renderUpdates(); renderEvents(); renderPhotos(); }
 </script>
-  <script>
-    <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-
-<script>
-  // Your Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-    authDomain: "school-test-4b350.firebaseapp.com",
-    projectId: "school-test-4b350",
-    storageBucket: "school-test-4b350.firebasestorage.app",
-    messagingSenderId: "557567714700",
-    appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // Load Updates
-  function loadUpdates() {
-    const updatesList = document.getElementById("updatesList");
-    updatesList.innerHTML = "";
-    db.collection("updates").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-      updatesList.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let li = document.createElement("li");
-        li.textContent = data.text;
-        updatesList.appendChild(li);
-      });
-    });
-  }
-
-  // Load Notices
-  function loadNotices() {
-    const noticeList = document.getElementById("noticeList");
-    noticeList.innerHTML = "";
-    db.collection("notices").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-      noticeList.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let li = document.createElement("li");
-        li.textContent = data.text;
-        noticeList.appendChild(li);
-      });
-    });
-  }
-
-  // Load Calendar
-  function loadCalendar() {
-    const calendarList = document.getElementById("calendarList");
-    calendarList.innerHTML = "";
-    db.collection("calendar").orderBy("date", "asc").onSnapshot((snapshot) => {
-      calendarList.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let li = document.createElement("li");
-        li.textContent = `${data.date} - ${data.event}`;
-        calendarList.appendChild(li);
-      });
-    });
-  }
-
-  // Load Gallery
-  function loadGallery() {
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
-    db.collection("gallery").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-      gallery.innerHTML = "";
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        let img = document.createElement("img");
-        img.src = data.url;
-        img.style.width = "150px";
-        img.style.margin = "5px";
-        gallery.appendChild(img);
-      });
-    });
-  }
-
-  // Call loaders
-  loadUpdates();
-  loadNotices();
-  loadCalendar();
-  loadGallery();
-</script>
-
-  </script>
 </body>
 </html>
