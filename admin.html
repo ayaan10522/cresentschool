@@ -193,5 +193,70 @@
   }
   function renderAll(){ renderUpdates(); renderEvents(); renderPhotos(); }
 </script>
+  <script>
+    <!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+    authDomain: "school-test-4b350.firebaseapp.com",
+    projectId: "school-test-4b350",
+    storageBucket: "school-test-4b350.firebasestorage.app",
+    messagingSenderId: "557567714700",
+    appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+  };
+
+  // Init Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Handle Add Updates
+  document.getElementById("addUpdateBtn").addEventListener("click", async () => {
+    const updateText = document.getElementById("updateInput").value;
+    if (updateText.trim() !== "") {
+      await addDoc(collection(db, "updates"), { text: updateText });
+      alert("Update added!");
+      document.getElementById("updateInput").value = "";
+    }
+  });
+
+  // Handle Add Notices
+  document.getElementById("addNoticeBtn").addEventListener("click", async () => {
+    const noticeText = document.getElementById("noticeInput").value;
+    if (noticeText.trim() !== "") {
+      await addDoc(collection(db, "notices"), { text: noticeText });
+      alert("Notice added!");
+      document.getElementById("noticeInput").value = "";
+    }
+  });
+
+  // Handle Add Events
+  document.getElementById("addEventBtn").addEventListener("click", async () => {
+    const eventName = document.getElementById("eventName").value;
+    const eventDate = document.getElementById("eventDate").value;
+    if (eventName.trim() !== "" && eventDate !== "") {
+      await addDoc(collection(db, "events"), { name: eventName, date: eventDate });
+      alert("Event added!");
+      document.getElementById("eventName").value = "";
+      document.getElementById("eventDate").value = "";
+    }
+  });
+
+  // Handle Add Gallery Photo (just storing image URL for now)
+  document.getElementById("addGalleryBtn").addEventListener("click", async () => {
+    const photoUrl = document.getElementById("galleryInput").value;
+    if (photoUrl.trim() !== "") {
+      await addDoc(collection(db, "gallery"), { url: photoUrl });
+      alert("Photo added to gallery!");
+      document.getElementById("galleryInput").value = "";
+    }
+  });
+</script>
+
+  </script>
 </body>
 </html>
+
