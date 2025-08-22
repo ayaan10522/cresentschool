@@ -1,42 +1,88 @@
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Crescent School - Admin</title>
-<style>
-:root{--green:#2f6b3a;--light-green:#8fbf7e;--gold:#d6b72a}
-body{font-family:Inter, system-ui, Arial;background:#f4fff6;margin:0;padding:18px}
-.wrap{max-width:980px;margin:0 auto}
-header{display:flex;gap:12px;align-items:center}
-header h1{margin:0}
-.card{background:white;padding:16px;border-radius:12px;box-shadow:0 12px 30px rgba(10,20,10,0.06);margin-top:12px}
-label{display:block;margin-top:10px;font-weight:600}
-input,textarea,select{padding:10px;width:100%;border-radius:8px;border:1px solid #ddd}
-button{margin-top:10px;padding:10px 12px;border-radius:8px;border:0;background:var(--green);color:white;font-weight:700;cursor:pointer}
-</style>
-</head>
-<body>
-<div class="wrap">
-<header>
-<img src="/logo.png" alt="logo" style="width:60px;height:60px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'">
-<div>
-<h1>Crescent School — Admin</h1>
-<div style="opacity:0.8">/admin — Add updates, events & upload gallery photos</div>
-</div>
-</header>
+onSnapshot(evtQ, snapshot=>{
+const wrap = document.getElementById('manageEvents'); wrap.innerHTML=''
+snapshot.forEach(snap=>{
+const d=snap.data(); const id=snap.id
+const date = d.date ? new Date(d.date).toLocaleDateString() : ''
+const row = document.createElement('div'); row.className='list-item'
+row.innerHTML = `<div><strong>${escapeHtml(d.title||'')}</strong><div class=\"muted\">${date} ${d.location?'- '+escapeHtml(d.location):''}</div></div><div class=\"actions\"><button class=\"btn\" onclick=\"editEvent('${id}')\">Edit</button><button class=\"btn\" style=\"background:#c0392b\" onclick=\"deleteEvent('${id}')\">Delete</button></div>`
+wrap.appendChild(row)
+})
+})
 
 
-<div class="card">
-<h2>Add an Update</h2>
-<label>Title <input id="updTitle"></label>
-<label>Body <textarea id="updBody" rows="4"></textarea></label>
-<button id="addUpdate">Publish Update</button>
-<div id="updResult" style="margin-top:8px"></div>
-</div>
+// Notices
+const noteQ = query(collection(db,'notices'), orderBy('createdAt','desc'))
+onSnapshot(noteQ,snapshot=>{
+const wrap=document.getElementById('manageNotices'); wrap.innerHTML=''
+snapshot.forEach(snap=>{
+const d=snap.data(); const id=snap.id
+const row=document.createElement('div'); row.className='list-item'
+row.innerHTML = `<div><strong>${escapeHtml(d.title||'')}</strong><div class=\"muted\">${d.createdAt?new Date(d.createdAt.toMillis()).toLocaleString():''}</div></div><div class=\"actions\"><button class=\"btn\" onclick=\"editNotice('${id}')\">Edit</button><button class=\"btn\" style=\"background:#c0392b\" onclick=\"deleteNotice('${id}')\">Delete</button></div>`
+wrap.appendChild(row)
+})
+})
+}
 
 
-<div class="card">
-<h2>Add Calendar Event</h2>
-<label>Title <input id="evtTitle"></label>
-<label>Date <input id="evtDate" type="date"></label>
-<label>Type <select id="evtType"><option>General</option><option>Exam</option><option>Holiday</option><option>Sports</option></select></label>
+// Edit/Delete functions - using global functions so the inline onclick attributes can call them
+window.deleteUpdate = async(id)=>{ if(!confirm('Delete update?')) return; await deleteDoc(doc(db,'updates',id)) }
+window.deleteGallery = async(id)=>{ if(!confirm('Delete image?')) return; await deleteDoc(doc(db,'gallery',id)) }
+window.deleteEvent = async(id)=>{ if(!confirm('Delete event?')) return; await deleteDoc(doc(db,'events',id)) }
+window.deleteNotice = async(id)=>{ if(!confirm('Delete notice?')) return; await deleteDoc(doc(db,'notices',id)) }
+
+
+window.editUpdate = async(id)=>{
+const newTitle = prompt('New title')
+const newBody = prompt('New body')
+if(newTitle==null && newBody==null) return
+const payload = {}
+if(newTitle!=null) payload.title=newTitle
+if(newBody!=null) payload.body=newBody
+await updateDoc(doc(db,'updates',id), payload)
+}
+
+
+window.editGallery = async(id, url, cap)=>{
+const newUrl = prompt('Image URL', url)
+const newCap = prompt('Caption', cap)
+if(newUrl==null && newCap==null) return
+const payload={}
+if(newUrl!=null) payload.url=newUrl
+if(newCap!=null) payload.caption=newCap
+await updateDoc(doc(db,'gallery',id), payload)
+}
+
+
+window.editEvent = async(id)=>{
+const newTitle = prompt('Title')
+const newDate = prompt('Date (YYYY-MM-DD)')
+const newLoc = prompt('Location')
+const newDesc = prompt('Description')
+const payload={}
+if(newTitle!=null) payload.title=newTitle
+if(newDate) payload.date = new Date(newDate).toISOString()
+if(newLoc!=null) payload.location=newLoc
+if(newDesc!=null) payload.description=newDesc
+await updateDoc(doc(db,'events',id), payload)
+}
+
+
+window.editNotice = async(id)=>{
+const newTitle = prompt('Title')
+const newBody = prompt('Body')
+const payload={}
+if(newTitle!=null) payload.title=newTitle
+if(newBody!=null) payload.body=newBody
+await updateDoc(doc(db,'notices',id), payload)
+}
+
+
+// Helpers
+function escapeHtml(s){ if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+function escapeJS(s){ if(!s) return ''; return String(s).replaceAll("'","\\'").replaceAll('\\','\\\\') }
+
+
+</script>
+</body>
+</html>
