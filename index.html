@@ -1,3 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crescent School App</title>
+<link rel="icon" href="assets/logo.jpg">
+<style>
+  :root{
+    --green:#0b7d2b; --greenDark:#0a5a22; --gold:#d4af37;
+    --bg:#f3f6f4; --card:#ffffff; --ink:#0f172a; --muted:#94a3b8;
+    --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box} html,body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  img{max-width:100%;height:auto}
+  /* App header */
+  .appbar{position:sticky;top:0;background:linear-gradient(140deg,var(--greenDark),var(--green));color:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;z-index:10}
+  .appbar img{width:40px;height:40px;border-radius:999px;border:2px solid var(--gold)}
+  .appbar h1{font-size:1.1rem;margin:0;line-height:1.1}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .tile{background:linear-gradient(120deg,#f7f9f8,#eef6f0);border:1px solid #e6efe8;border-radius:20px;padding:18px;text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--shadow)}
+  .tile:hover{transform:translateY(-2px)}
+  .tile h3{margin:10px 0 0 0}
+  .badge{display:inline-block;background:var(--gold);color:#000;font-weight:700;padding:.2rem .55rem;border-radius:999px;font-size:.8rem}
+  /* lists */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:#f7faf7;border:1px solid #e5efe6;border-radius:14px;padding:12px}
+  .empty{color:var(--muted);text-align:center;padding:12px}
+  /* MPIN screen */
+  .center{min-height:100dvh;display:grid;place-items:center;padding:16px}
+  .login{max-width:380px;width:100%;padding:22px;border-radius:22px;background:#fff;box-shadow:var(--shadow);border:1px solid #e8eee9;text-align:center}
+  .login img{width:72px;height:72px;border-radius:999px;border:2px solid var(--gold);margin-bottom:8px}
+  input[type="password"],input[type="text"],input[type="date"]{width:100%;padding:12px;border:1px solid #e5efe6;border-radius:12px}
+  button{background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .tabs{display:flex;gap:8px;margin:12px 0}
+  .tab{flex:1;background:#eef6f0;border:1px solid #dfe9e2;border-radius:999px;padding:10px;font-weight:800;cursor:pointer}
+  .tab.active{background:var(--green);border-color:var(--greenDark);color:#fff}
+  .hidden{display:none}
+  @media (max-width:900px){ .tiles{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .tiles{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<!-- MPIN Lock -->
+<div id="lock" class="center">
+  <div class="login">
+    <img src="assets/logo.jpg" alt="Crescent School">
+    <h2 style="margin:0">Crescent School</h2>
+    <p style="margin:.25rem 0 1rem 0;color:#64748b">Enter MPIN to continue</p>
+    <input id="mpin" type="password" inputmode="numeric" maxlength="6" placeholder="MPIN (default 123456)">
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+      <button id="loginBtn">Unlock</button>
+      <button id="rememberBtn" style="background:#efefef;color:#111">Remember</button>
+    </div>
+    <p style="font-size:.85rem;color:#64748b;margin-top:10px">Tip: Admin is at <b>/admin/</b> (same MPIN).</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" class="hidden">
+  <div class="appbar">
+    <img src="assets/logo.jpg" alt="">
+    <div>
+      <h1>Crescent School App</h1>
+      <small class="badge">MPIN Secured</small>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button id="logout" style="background:#1f3d2b">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tiles">
+        <div class="tile" data-screen="updates">
+          <div>🔔</div><h3>Updates</h3>
+          <small>School notices & circulars</small>
+        </div>
+        <div class="tile" data-screen="calendar">
+          <div>📅</div><h3>Calendar</h3>
+          <small>Events & exams</small>
+        </div>
+        <div class="tile" data-screen="gallery">
+          <div>🖼️</div><h3>Gallery</h3>
+          <small>Photos & memories</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen: Updates -->
+    <div id="screen-updates" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="updates">Updates</button>
+      </div>
+      <div id="updatesList" class="list"></div>
+      <div class="empty" id="updatesEmpty" style="display:none">No updates yet.</div>
+    </div>
+
+    <!-- Screen: Calendar -->
+    <div id="screen-calendar" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="calendar">Calendar</button>
+      </div>
+      <div id="calendarList" class="list"></div>
+      <div class="empty" id="calendarEmpty" style="display:none">No events scheduled.</div>
+    </div>
+
+    <!-- Screen: Gallery -->
+    <div id="screen-gallery" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="gallery">Gallery</button>
+      </div>
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+      <div class="empty" id="galleryEmpty" style="display:none">No photos yet.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+    authDomain: "school-test-4b350.firebaseapp.com",
+    projectId: "school-test-4b350",
+    storageBucket: "school-test-4b350.firebasestorage.app",
+    messagingSenderId: "557567714700",
+    appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // --- Constants ---
+  const DEFAULT_PIN = '654321';
+  const KEY_AUTH = 'cs_auth'; // Key for localStorage to remember login
+
+  // --- Auth flow (using localStorage as before) ---
+  const lock = document.getElementById('lock');
+  const app  = document.getElementById('app');
+  const mpinInput = document.getElementById('mpin');
+
+  // Check if already authenticated via localStorage
+  if(localStorage.getItem(KEY_AUTH) === '1'){
+    lock.classList.add('hidden');
+    app.classList.remove('hidden');
+    renderAll();
+  }
+
+  document.getElementById('loginBtn').onclick = ()=>{
+    if(mpinInput.value === DEFAULT_PIN){
+      lock.classList.add('hidden');
+      app.classList.remove('hidden');
+      renderAll();
+    } else alert('Wrong MPIN');
+  };
+
+  document.getElementById('rememberBtn').onclick = ()=>{
+    if(mpinInput.value === DEFAULT_PIN){
+      localStorage.setItem(KEY_AUTH, '1');
+      alert('MPIN remembered!');
+    } else alert('Wrong MPIN');
+  };
+
+  document.getElementById('logout').onclick = ()=>{
+    localStorage.removeItem(KEY_AUTH);
+    location.reload();
+  };
+
+  // --- Navigation (tiles just scroll to sections) ---
+  document.querySelectorAll('.tile').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const screen = 'screen-' + t.dataset.screen;
+      document.getElementById(screen).scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // --- Renderers (fetching data from Firestore) ---
+  async function renderUpdates(){
+    const list = document.getElementById('updatesList');
+    const empty = document.getElementById('updatesEmpty');
+    list.innerHTML = ''; // Clear previous content
+
+    try {
+      // Listen for real-time updates
+      db.collection('updates').orderBy('time', 'desc').onSnapshot(snapshot => {
+        const data = snapshot.docs.map(doc => doc.data());
+        list.innerHTML = ''; // Clear list before re-rendering
+
+        if(!data.length){
+          empty.style.display='block';
+        } else {
+          empty.style.display='none';
+          data.forEach(u=>{
+            const el = document.createElement('div');
+            const d = new Date(u.time ? u.time.toDate() : Date.now()); // Convert Firestore Timestamp to Date
+            el.className='item';
+            el.innerHTML = `<b>🔔 Update</b><div>${u.text}</div><small style="color:#64748b">${d.toLocaleString()}</small>`;
+            list.appendChild(el);
+          });
+        }
+      }, error => {
+        console.error("Error fetching updates:", error);
+        empty.style.display='block';
+        empty.textContent = 'Error loading updates.';
+      });
+    } catch (error) {
+      console.error("Error setting up updates listener:", error);
+      empty.style.display='block';
+      empty.textContent = 'Error loading updates.';
+    }
+  }
+
+  async function renderEvents(){
+    const list = document.getElementById('calendarList');
+    const empty = document.getElementById('calendarEmpty');
+    list.innerHTML = ''; // Clear previous content
+
+    try {
+      // Listen for real-time updates
+      db.collection('events').orderBy('date').onSnapshot(snapshot => {
+        const data = snapshot.docs.map(doc => doc.data());
+        list.innerHTML = ''; // Clear list before re-rendering
+
+        if(!data.length){
+          empty.style.display='block';
+        } else {
+          empty.style.display='none';
+          data.forEach(ev=>{
+            const el = document.createElement('div');
+            el.className='item';
+            el.innerHTML = `<b>📅 ${ev.date}</b><div>${ev.title}</div>`;
+            list.appendChild(el);
+          });
+        }
+      }, error => {
+        console.error("Error fetching events:", error);
+        empty.style.display='block';
+        empty.textContent = 'Error loading events.';
+      });
+    } catch (error) {
+      console.error("Error setting up events listener:", error);
+      empty.style.display='block';
+      empty.textContent = 'Error loading events.';
+    }
+  }
+
+  async function renderPhotos(){
+    const grid = document.getElementById('galleryGrid');
+    const empty = document.getElementById('galleryEmpty');
+    grid.innerHTML = ''; // Clear previous content
+
+    try {
+      // Listen for real-time updates
+      db.collection('photos').onSnapshot(snapshot => {
+        const data = snapshot.docs.map(doc => doc.data());
+        grid.innerHTML = ''; // Clear grid before re-rendering
+
+        if(!data.length){
+          empty.style.display='block';
+        } else {
+          empty.style.display='none';
+          data.forEach(p=>{
+            const card = document.createElement('div');
+            card.style.borderRadius='16px'; card.style.overflow='hidden'; card.style.border='2px solid #fff'; card.style.boxShadow='var(--shadow)';
+            card.innerHTML = `<img src="${p.url}" alt="Photo">`; // Assuming photo objects have a 'url' field
+            grid.appendChild(card);
+          });
+        }
+      }, error => {
+        console.error("Error fetching photos:", error);
+        empty.style.display='block';
+        empty.textContent = 'Error loading photos.';
+      });
+    } catch (error) {
+      console.error("Error setting up photos listener:", error);
+      empty.style.display='block';
+      empty.textContent = 'Error loading photos.';
+    }
+  }
+
+  function renderAll(){
+    renderUpdates();
+    renderEvents();
+    renderPhotos();
+  }
+
+  // Initial data seeding for Firebase (run this once, then remove or comment out)
+  // This part is for initial setup of your Firestore database.
+  // You would typically do this from an admin panel or a one-time script.
+  // For demonstration, I'm including it here.
+  // After running your app once and seeing data in Firestore, you can remove this block.
+  async function seedFirebaseData() {
+    const updatesRef = db.collection('updates');
+    const eventsRef = db.collection('events');
+    const photosRef = db.collection('photos');
+
     // Check if collections are empty before seeding
     const updatesSnapshot = await updatesRef.limit(1).get();
     if (updatesSnapshot.empty) {
@@ -5,12 +310,14 @@
       await updatesRef.add({text:"Annual Sports Day on 15th October. All students must participate.", time: new firebase.firestore.Timestamp(Date.now()/1000 - 86400, 0)}); // Example of older timestamp
       console.log("Updates seeded.");
     }
+
     const eventsSnapshot = await eventsRef.limit(1).get();
     if (eventsSnapshot.empty) {
       await eventsRef.add({date:"2025-09-12", title:"Half-yearly exams begin"});
       await eventsRef.add({date:"2025-10-05", title:"Parent Orientation (Grades 1–3)"});
       console.log("Events seeded.");
     }
+
     const photosSnapshot = await photosRef.limit(1).get();
     if (photosSnapshot.empty) {
       await photosRef.add({url:"https://images.unsplash.com/photo-1510936111840-65e151ad71bb?q=80&w=600"});
@@ -19,8 +326,10 @@
       console.log("Photos seeded.");
     }
   }
+
   // Run seeding once (you might want to remove this after initial setup)
   // seedFirebaseData(); // Uncomment this line, run your app once, then comment it out again.
+
 </script>
 </body>
 </html>
