@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="script.js"></script>
-
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crescent Admin</title>
@@ -58,10 +56,10 @@
       <div class="card">
         <h3>🔔 Add Update</h3>
         <label>Update Text</label>
-        <input id="updateInput" placeholder="e.g., School reopens on 30 Sept.">
+        <input id="updText" placeholder="e.g., School reopens on 30 Sept.">
         <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="updateBtn">Add Update</button>
-          <button id="updateBtn" class="danger">Clear All</button>
+          <button id="addUpdate">Add Update</button>
+          <button id="clearUpdates" class="danger">Clear All</button>
         </div>
         <div class="list" id="updatesList"></div>
       </div>
@@ -70,12 +68,12 @@
       <div class="card">
         <h3>📅 Add Calendar Event</h3>
         <label>Date</label>
-        <input id="updateInput" type="date">
+        <input id="evDate" type="date">
         <label>Title</label>
         <input id="evTitle" placeholder="e.g., Parent Orientation">
         <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="updateBtn">Add Event</button>
-          <button id="updateBtn" class="danger">Clear All</button>
+          <button id="addEvent">Add Event</button>
+          <button id="clearEvents" class="danger">Clear All</button>
         </div>
         <div class="list" id="eventsList"></div>
       </div>
@@ -84,10 +82,10 @@
       <div class="card">
         <h3>🖼️ Add Gallery Photo</h3>
         <label>Image URL</label>
-        <input id="updateInput" placeholder="https://...">
+        <input id="photoUrl" placeholder="https://...">
         <div style="margin-top:10px;display:flex;gap:8px">
-          <button id="updateBtn">Add Photo</button>
-          <button id="updateBtn" class="danger">Clear All</button>
+          <button id="addPhoto">Add Photo</button>
+          <button id="clearPhotos" class="danger">Clear All</button>
         </div>
         <div class="list" id="photosList"></div>
       </div>
@@ -102,13 +100,26 @@
   </div>
 </div>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
 <script>
-  const DEFAULT_PIN = '123456';
-  const KEY_UPDATES = 'cs_updates';
-  const KEY_EVENTS  = 'cs_events';
-  const KEY_PHOTOS  = 'cs_photos';
-  const get = (k, d)=> JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
-  const set = (k, v)=> localStorage.setItem(k, JSON.stringify(v));
+  // Firebase Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+    authDomain: "school-test-4b350.firebaseapp.com",
+    projectId: "school-test-4b350",
+    storageBucket: "school-test-4b350.firebasestorage.app",
+    messagingSenderId: "557567714700",
+    appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const DEFAULT_PIN = '123456'; // Admin MPIN
 
   // Auth
   document.getElementById('unlock').onclick = ()=>{
@@ -122,75 +133,153 @@
 
   // Updates
   const updInput = document.getElementById('updText');
-  document.getElementById('addUpdate').onclick = ()=>{
+  document.getElementById('addUpdate').onclick = async ()=>{
     const text = (updInput.value||'').trim();
     if(!text) return alert('Enter update text');
-    const list = get(KEY_UPDATES, []);
-    list.push({text, time: Date.now()});
-    set(KEY_UPDATES, list);
-    updInput.value='';
-    renderUpdates();
+    try {
+      await db.collection('updates').add({
+        text: text,
+        time: firebase.firestore.FieldValue.serverTimestamp() // Use server timestamp
+      });
+      updInput.value='';
+      renderUpdates(); // Re-render to show new update
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      alert('Failed to add update.');
+    }
   };
-  document.getElementById('clearUpdates').onclick = ()=>{
-    if(confirm('Clear ALL updates?')){ localStorage.removeItem(KEY_UPDATES); renderUpdates(); }
+  document.getElementById('clearUpdates').onclick = async ()=>{
+    if(confirm('Clear ALL updates?')){
+      try {
+        const snapshot = await db.collection('updates').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        renderUpdates(); // Re-render after clearing
+      } catch (e) {
+        console.error("Error clearing updates: ", e);
+        alert('Failed to clear updates.');
+      }
+    }
   };
 
   // Events
   const evDate = document.getElementById('evDate');
   const evTitle = document.getElementById('evTitle');
-  document.getElementById('addEvent').onclick = ()=>{
+  document.getElementById('addEvent').onclick = async ()=>{
     if(!evDate.value || !evTitle.value.trim()) return alert('Enter date and title');
-    const events = get(KEY_EVENTS, []);
-    events.push({date: evDate.value, title: evTitle.value.trim()});
-    set(KEY_EVENTS, events); evDate.value=''; evTitle.value='';
-    renderEvents();
+    try {
+      await db.collection('events').add({
+        date: evDate.value,
+        title: evTitle.value.trim()
+      });
+      evDate.value=''; evTitle.value='';
+      renderEvents(); // Re-render to show new event
+    } catch (e) {
+      console.error("Error adding event: ", e);
+      alert('Failed to add event.');
+    }
   };
-  document.getElementById('clearEvents').onclick = ()=>{
-    if(confirm('Clear ALL events?')){ localStorage.removeItem(KEY_EVENTS); renderEvents(); }
+  document.getElementById('clearEvents').onclick = async ()=>{
+    if(confirm('Clear ALL events?')){
+      try {
+        const snapshot = await db.collection('events').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        renderEvents(); // Re-render after clearing
+      } catch (e) {
+        console.error("Error clearing events: ", e);
+        alert('Failed to clear events.');
+      }
+    }
   };
 
   // Photos
   const photoUrl = document.getElementById('photoUrl');
-  document.getElementById('addPhoto').onclick = ()=>{
+  document.getElementById('addPhoto').onclick = async ()=>{
     const url = (photoUrl.value||'').trim();
     if(!/^https?:\/\//i.test(url)) return alert('Enter a valid image URL (http/https)');
-    const photos = get(KEY_PHOTOS, []);
-    photos.push(url); set(KEY_PHOTOS, photos); photoUrl.value=''; renderPhotos();
+    try {
+      await db.collection('photos').add({
+        url: url
+      });
+      photoUrl.value='';
+      renderPhotos(); // Re-render to show new photo
+    } catch (e) {
+      console.error("Error adding photo: ", e);
+      alert('Failed to add photo.');
+    }
   };
-  document.getElementById('clearPhotos').onclick = ()=>{
-    if(confirm('Clear ALL photos?')){ localStorage.removeItem(KEY_PHOTOS); renderPhotos(); }
+  document.getElementById('clearPhotos').onclick = async ()=>{
+    if(confirm('Clear ALL photos?')){
+      try {
+        const snapshot = await db.collection('photos').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        renderPhotos(); // Re-render after clearing
+      } catch (e) {
+        console.error("Error clearing photos: ", e);
+        alert('Failed to clear photos.');
+      }
+    }
   };
 
-  // Renderers
+  // Renderers (fetching data from Firestore)
   function renderUpdates(){
     const list = document.getElementById('updatesList');
-    const data = get(KEY_UPDATES, []);
     list.innerHTML = '';
-    data.slice().reverse().forEach((u,idx)=>{
-      const d = new Date(u.time||Date.now());
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<b>${d.toLocaleString()}</b><div>${u.text}</div>`;
-      list.appendChild(el);
+    db.collection('updates').orderBy('time', 'desc').onSnapshot(snapshot => {
+      list.innerHTML = ''; // Clear list before re-rendering
+      snapshot.docs.forEach(doc => {
+        const u = doc.data();
+        const d = new Date(u.time ? u.time.toDate() : Date.now());
+        const el = document.createElement('div'); el.className='item';
+        el.innerHTML = `<b>${d.toLocaleString()}</b><div>${u.text}</div>`;
+        list.appendChild(el);
+      });
+    }, error => {
+      console.error("Error getting updates: ", error);
+      list.innerHTML = '<div class="item" style="color:red;">Error loading updates.</div>';
     });
   }
   function renderEvents(){
     const list = document.getElementById('eventsList');
-    const data = get(KEY_EVENTS, []);
     list.innerHTML = '';
-    data.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<b>${ev.date}</b> — ${ev.title}`;
-      list.appendChild(el);
+    db.collection('events').orderBy('date').onSnapshot(snapshot => {
+      list.innerHTML = ''; // Clear list before re-rendering
+      snapshot.docs.forEach(doc => {
+        const ev = doc.data();
+        const el = document.createElement('div'); el.className='item';
+        el.innerHTML = `<b>${ev.date}</b> — ${ev.title}`;
+        list.appendChild(el);
+      });
+    }, error => {
+      console.error("Error getting events: ", error);
+      list.innerHTML = '<div class="item" style="color:red;">Error loading events.</div>';
     });
   }
   function renderPhotos(){
     const list = document.getElementById('photosList');
-    const data = get(KEY_PHOTOS, []);
     list.innerHTML = '';
-    data.forEach(url=>{
-      const el = document.createElement('div'); el.className='item';
-      el.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
-      list.appendChild(el);
+    db.collection('photos').onSnapshot(snapshot => {
+      list.innerHTML = ''; // Clear list before re-rendering
+      snapshot.docs.forEach(doc => {
+        const url = doc.data().url;
+        const el = document.createElement('div'); el.className='item';
+        el.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+        list.appendChild(el);
+      });
+    }, error => {
+      console.error("Error getting photos: ", error);
+      list.innerHTML = '<div class="item" style="color:red;">Error loading photos.</div>';
     });
   }
   function renderAll(){ renderUpdates(); renderEvents(); renderPhotos(); }
