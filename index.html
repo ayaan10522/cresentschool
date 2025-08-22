@@ -1,56 +1,147 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Crescent School Portal</title>
-<style>
-:root{--accent:#294b1d;--accent-2:#678b3a;--muted:#666}
-body{font-family:Inter, system-ui, Arial; margin:0; background:#f6f8f4; color:#222}
-header{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; padding:18px 22px; display:flex; align-items:center; gap:16px}
-header img{height:56px}
-.container{max-width:1100px;margin:28px auto;padding:0 18px}
-.grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
-.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(20,30,20,0.06)}
-h2{margin:0 0 12px}
-.updates .item,.gallery .item,.events .item{border-bottom:1px solid #eee;padding:12px 0}
-.btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:white;text-decoration:none}
-.muted{color:var(--muted);font-size:13px}
-.gallery-grid{display:flex;flex-wrap:wrap;gap:8px}
-.gallery-grid img{width:120px;height:80px;object-fit:cover;border-radius:6px}
-footer{padding:14px;text-align:center;color:var(--muted)}
-.search{margin-bottom:10px}
-.notice{background:#fffbe6;padding:10px;border-radius:8px;margin-bottom:12px}
-.mpin-box{display:flex;gap:8px;align-items:center}
-.small{font-size:13px}
-@media (max-width:880px){.grid{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f9f0;
+      color: #333;
+    }
+    header {
+      background: #2d8659;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    nav {
+      background: #24974a;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    section {
+      padding: 20px;
+    }
+    h2 {
+      color: #2d8659;
+    }
+    .card {
+      background: white;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .gallery img {
+      width: 150px;
+      height: 100px;
+      object-fit: cover;
+      margin: 5px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-<header>
-<img src="/mnt/data/images (1).jpg" alt="logo">
-<div>
-<div style="font-weight:700;font-size:18px">Crescent School</div>
-<div class="muted">Student Portal — Updates, Gallery, Events & Notices</div>
-</div>
-<div style="margin-left:auto;" class="mpin-box">
-<div class="muted small">Enter MPIN to view Admin actions:</div>
-<input id="mpinInput" placeholder="MPIN" style="padding:6px 8px;border-radius:6px;border:1px solid #ddd;margin-left:8px;width:120px">
-<button id="mpinBtn" class="btn">Unlock</button>
-</div>
-</header>
+  <header>
+    <h1>📚 School Student Portal</h1>
+  </header>
 
+  <nav>
+    <a href="#updates">Updates</a>
+    <a href="#notices">Notices</a>
+    <a href="#calendar">Calendar</a>
+    <a href="#gallery">Gallery</a>
+  </nav>
 
-<div class="container">
-<div class="grid">
-<main>
-<section class="card updates" id="updatesSection">
-<h2>Latest Updates</h2>
-<div id="updatesList">Loading updates...</div>
-</section>
+  <section id="updates">
+    <h2>Latest Updates</h2>
+    <div id="updatesList"></div>
+  </section>
 
+  <section id="notices">
+    <h2>Notices</h2>
+    <div id="noticesList"></div>
+  </section>
 
-<section class="card gallery" style="margin-top:18px">
-<h2>Gallery</h2>
-<div id="galleryGrid" class="gallery-grid">Loading gallery...</div>
-</section>
+  <section id="calendar">
+    <h2>Upcoming Events</h2>
+    <div id="eventsList"></div>
+  </section>
+
+  <section id="gallery">
+    <h2>Gallery</h2>
+    <div class="gallery" id="galleryList"></div>
+  </section>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+      authDomain: "school-test-4b350.firebaseapp.com",
+      projectId: "school-test-4b350",
+      storageBucket: "school-test-4b350.firebasestorage.app",
+      messagingSenderId: "557567714700",
+      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+    };
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load Updates
+    const updatesList = document.getElementById("updatesList");
+    onSnapshot(collection(db, "updates"), (snapshot) => {
+      updatesList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        updatesList.innerHTML += `<div class="card"><strong>${data.title}</strong><p>${data.description}</p></div>`;
+      });
+    });
+
+    // Load Notices
+    const noticesList = document.getElementById("noticesList");
+    onSnapshot(collection(db, "notices"), (snapshot) => {
+      noticesList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        noticesList.innerHTML += `<div class="card"><strong>${data.title}</strong><p>${data.description}</p></div>`;
+      });
+    });
+
+    // Load Events
+    const eventsList = document.getElementById("eventsList");
+    onSnapshot(collection(db, "events"), (snapshot) => {
+      eventsList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        eventsList.innerHTML += `<div class="card"><strong>${data.date}</strong> - ${data.event}</div>`;
+      });
+    });
+
+    // Load Gallery
+    const galleryList = document.getElementById("galleryList");
+    onSnapshot(collection(db, "gallery"), (snapshot) => {
+      galleryList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        galleryList.innerHTML += `<img src="${data.url}" alt="Gallery Photo">`;
+      });
+    });
+  </script>
+</body>
 </html>
