@@ -1,147 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Portal</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f0f9f0;
-      color: #333;
-    }
-    header {
-      background: #2d8659;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
-    nav {
-      background: #24974a;
-      display: flex;
-      justify-content: space-around;
-      padding: 10px;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    section {
-      padding: 20px;
-    }
-    h2 {
-      color: #2d8659;
-    }
-    .card {
-      background: white;
-      margin: 10px 0;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .gallery img {
-      width: 150px;
-      height: 100px;
-      object-fit: cover;
-      margin: 5px;
-      border-radius: 5px;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crescent School App</title>
+<link rel="icon" href="assets/logo.jpg">
+<style>
+  :root{
+    --green:#0b7d2b; --greenDark:#0a5a22; --gold:#d4af37;
+    --bg:#f3f6f4; --card:#ffffff; --ink:#0f172a; --muted:#94a3b8;
+    --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box} html,body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  img{max-width:100%;height:auto}
+  /* App header */
+  .appbar{position:sticky;top:0;background:linear-gradient(140deg,var(--greenDark),var(--green));color:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;z-index:10}
+  .appbar img{width:40px;height:40px;border-radius:999px;border:2px solid var(--gold)}
+  .appbar h1{font-size:1.1rem;margin:0;line-height:1.1}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .tile{background:linear-gradient(120deg,#f7f9f8,#eef6f0);border:1px solid #e6efe8;border-radius:20px;padding:18px;text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--shadow)}
+  .tile:hover{transform:translateY(-2px)}
+  .tile h3{margin:10px 0 0 0}
+  .badge{display:inline-block;background:var(--gold);color:#000;font-weight:700;padding:.2rem .55rem;border-radius:999px;font-size:.8rem}
+  /* lists */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:#f7faf7;border:1px solid #e5efe6;border-radius:14px;padding:12px}
+  .empty{color:var(--muted);text-align:center;padding:12px}
+  /* MPIN screen */
+  .center{min-height:100dvh;display:grid;place-items:center;padding:16px}
+  .login{max-width:380px;width:100%;padding:22px;border-radius:22px;background:#fff;box-shadow:var(--shadow);border:1px solid #e8eee9;text-align:center}
+  .login img{width:72px;height:72px;border-radius:999px;border:2px solid var(--gold);margin-bottom:8px}
+  input[type="password"],input[type="text"],input[type="date"]{width:100%;padding:12px;border:1px solid #e5efe6;border-radius:12px}
+  button{background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
+  .tabs{display:flex;gap:8px;margin:12px 0}
+  .tab{flex:1;background:#eef6f0;border:1px solid #dfe9e2;border-radius:999px;padding:10px;font-weight:800;cursor:pointer}
+  .tab.active{background:var(--green);border-color:var(--greenDark);color:#fff}
+  .hidden{display:none}
+  @media (max-width:900px){ .tiles{grid-template-columns:1fr 1fr} }
+  @media (max-width:560px){ .tiles{grid-template-columns:1fr} }
+</style>
 </head>
 <body>
-  <header>
-    <h1>📚 School Student Portal</h1>
-  </header>
 
-  <nav>
-    <a href="#updates">Updates</a>
-    <a href="#notices">Notices</a>
-    <a href="#calendar">Calendar</a>
-    <a href="#gallery">Gallery</a>
-  </nav>
+<!-- MPIN Lock -->
+<div id="lock" class="center">
+  <div class="login">
+    <img src="assets/logo.jpg" alt="Crescent School">
+    <h2 style="margin:0">Crescent School</h2>
+    <p style="margin:.25rem 0 1rem 0;color:#64748b">Enter MPIN to continue</p>
+    <input id="mpin" type="password" inputmode="numeric" maxlength="6" placeholder="MPIN (default 123456">
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+      <button id="loginBtn">Unlock</button>
+      <button id="rememberBtn" style="background:#efefef;color:#111">Remember</button>
+    </div>
+    <p style="font-size:.85rem;color:#64748b;margin-top:10px">Tip: Admin is at <b>/admin/</b> (same MPIN).</p>
+  </div>
+</div>
 
-  <section id="updates">
-    <h2>Latest Updates</h2>
-    <div id="updatesList"></div>
-  </section>
+<!-- App -->
+<div id="app" class="hidden">
+  <div class="appbar">
+    <img src="assets/logo.jpg" alt="">
+    <div>
+      <h1>Crescent School App</h1>
+      <small class="badge">MPIN Secured</small>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button id="logout" style="background:#1f3d2b">Logout</button>
+    </div>
+  </div>
 
-  <section id="notices">
-    <h2>Notices</h2>
-    <div id="noticesList"></div>
-  </section>
+  <div class="wrap">
+    <div class="card">
+      <div class="tiles">
+        <div class="tile" data-screen="updates">
+          <div>🔔</div><h3>Updates</h3>
+          <small>School notices & circulars</small>
+        </div>
+        <div class="tile" data-screen="calendar">
+          <div>📅</div><h3>Calendar</h3>
+          <small>Events & exams</small>
+        </div>
+        <div class="tile" data-screen="gallery">
+          <div>🖼️</div><h3>Gallery</h3>
+          <small>Photos & memories</small>
+        </div>
+      </div>
+    </div>
 
-  <section id="calendar">
-    <h2>Upcoming Events</h2>
-    <div id="eventsList"></div>
-  </section>
+    <!-- Screen: Updates -->
+    <div id="screen-updates" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="updates">Updates</button>
+      </div>
+      <div id="updatesList" class="list"></div>
+      <div class="empty" id="updatesEmpty" style="display:none">No updates yet.</div>
+    </div>
 
-  <section id="gallery">
-    <h2>Gallery</h2>
-    <div class="gallery" id="galleryList"></div>
-  </section>
+    <!-- Screen: Calendar -->
+    <div id="screen-calendar" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="calendar">Calendar</button>
+      </div>
+      <div id="calendarList" class="list"></div>
+      <div class="empty" id="calendarEmpty" style="display:none">No events scheduled.</div>
+    </div>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <!-- Screen: Gallery -->
+    <div id="screen-gallery" class="card" style="margin-top:12px">
+      <div class="tabs">
+        <button class="tab active" data-tab="gallery">Gallery</button>
+      </div>
+      <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+      <div class="empty" id="galleryEmpty" style="display:none">No photos yet.</div>
+    </div>
+  </div>
+</div>
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
-      authDomain: "school-test-4b350.firebaseapp.com",
-      projectId: "school-test-4b350",
-      storageBucket: "school-test-4b350.firebasestorage.app",
-      messagingSenderId: "557567714700",
-      appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
-    };
+<script>
+  // --- Simple data layer using localStorage ---
+  const KEY_UPDATES = 'cs_updates';
+  const KEY_EVENTS  = 'cs_events';
+  const KEY_PHOTOS  = 'cs_photos';
+  const KEY_AUTH    = 'cs_logged_in';
+  const DEFAULT_PIN = '654321';
 
-    // Init Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const get = (k, d)=> JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
+  const set = (k, v)=> localStorage.setItem(k, JSON.stringify(v));
 
-    // Load Updates
+  // Seed demo data (only once)
+  if(!localStorage.getItem(KEY_UPDATES)){
+    set(KEY_UPDATES, [
+      {text:"School reopens on 30 Sept after mid-term.", time: Date.now()-86400000},
+      {text:"U-15 Football trials on 21 Sept, 7:00 AM.", time: Date.now()-43200000}
+    ]);
+  }
+  if(!localStorage.getItem(KEY_EVENTS)){
+    set(KEY_EVENTS, [
+      {date:"2025-09-12", title:"Half-yearly exams begin"},
+      {date:"2025-10-05", title:"Parent Orientation (Grades 1–3)"}
+    ]);
+  }
+  if(!localStorage.getItem(KEY_PHOTOS)){
+    set(KEY_PHOTOS, [
+      "https://images.unsplash.com/photo-1510936111840-65e151ad71bb?q=80&w=600",
+      "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=600",
+      "https://images.unsplash.com/photo-1517486808910-0f42f7b679bf?q=80&w=600"
+    ]);
+  }
+
+  // --- Auth flow ---
+  const lock = document.getElementById('lock');
+  const app  = document.getElementById('app');
+  const mpinInput = document.getElementById('mpin');
+  document.getElementById('loginBtn').onclick = ()=>{
+    if(mpinInput.value === DEFAULT_PIN){
+      app.classList.remove('hidden'); lock.classList.add('hidden');
+      if (remember) localStorage.setItem(KEY_AUTH,'1');
+      renderAll();
+    }else{
+      alert('Wrong MPIN');
+    }
+  };
+  let remember = false;
+  document.getElementById('rememberBtn').onclick = ()=>{
+    remember = !remember;
+    event.target.style.background = remember ? '#d4af37' : '#efefef';
+    event.target.style.color = remember ? '#000' : '#111';
+  };
+  document.getElementById('logout').onclick = ()=>{
+    localStorage.removeItem(KEY_AUTH);
+    location.reload();
+  };
+  if(localStorage.getItem(KEY_AUTH)==='1'){ app.classList.remove('hidden'); lock.classList.add('hidden'); renderAll(); }
+
+  // --- Navigation (tiles just scroll to sections) ---
+  document.querySelectorAll('.tile').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const screen = 'screen-' + t.dataset.screen;
+      document.getElementById(screen).scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // --- Renderers ---
+  function renderUpdates(){
+    const list = document.getElementById('updatesList');
+    const empty = document.getElementById('updatesEmpty');
+    const data = get(KEY_UPDATES, []);
+    list.innerHTML = '';
+    if(!data.length){ empty.style.display='block'; return } else empty.style.display='none';
+    data.slice().reverse().forEach(u=>{
+      const el = document.createElement('div');
+      const d = new Date(u.time||Date.now());
+      el.className='item';
+      el.innerHTML = `<b>🔔 Update</b><div>${u.text}</div><small style="color:#64748b">${d.toLocaleString()}</small>`;
+      list.appendChild(el);
+    });
+  }
+  function renderEvents(){
+    const list = document.getElementById('calendarList');
+    const empty = document.getElementById('calendarEmpty');
+    const data = get(KEY_EVENTS, []);
+    list.innerHTML = '';
+    if(!data.length){ empty.style.display='block'; return } else empty.style.display='none';
+    data.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ev=>{
+      const el = document.createElement('div');
+      el.className='item';
+      el.innerHTML = `<b>📅 ${ev.date}</b><div>${ev.title}</div>`;
+      list.appendChild(el);
+    });
+  }
+  function renderPhotos(){
+    const grid = document.getElementById('galleryGrid');
+    const empty = document.getElementById('galleryEmpty');
+    const data = get(KEY_PHOTOS, []);
+    grid.innerHTML = '';
+    if(!data.length){ empty.style.display='block'; return } else empty.style.display='none';
+    data.forEach(url=>{
+      const card = document.createElement('div');
+      card.style.borderRadius='16px'; card.style.overflow='hidden'; card.style.border='2px solid #fff'; card.style.boxShadow='var(--shadow)';
+      card.innerHTML = `<img src="${url}" alt="Photo">`;
+      grid.appendChild(card);
+    });
+  }
+  function renderAll(){ renderUpdates(); renderEvents(); renderPhotos(); }
+</script>
+  <script>
+    <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<script>
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyBBIG7IpuY8Hc3E0_zcEyon06an8ll6TGw",
+    authDomain: "school-test-4b350.firebaseapp.com",
+    projectId: "school-test-4b350",
+    storageBucket: "school-test-4b350.firebasestorage.app",
+    messagingSenderId: "557567714700",
+    appId: "1:557567714700:web:be0df02162246ee5d5a2a9"
+  };
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Load Updates
+  function loadUpdates() {
     const updatesList = document.getElementById("updatesList");
-    onSnapshot(collection(db, "updates"), (snapshot) => {
+    updatesList.innerHTML = "";
+    db.collection("updates").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
       updatesList.innerHTML = "";
       snapshot.forEach((doc) => {
         const data = doc.data();
-        updatesList.innerHTML += `<div class="card"><strong>${data.title}</strong><p>${data.description}</p></div>`;
+        let li = document.createElement("li");
+        li.textContent = data.text;
+        updatesList.appendChild(li);
       });
     });
+  }
 
-    // Load Notices
-    const noticesList = document.getElementById("noticesList");
-    onSnapshot(collection(db, "notices"), (snapshot) => {
-      noticesList.innerHTML = "";
+  // Load Notices
+  function loadNotices() {
+    const noticeList = document.getElementById("noticeList");
+    noticeList.innerHTML = "";
+    db.collection("notices").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+      noticeList.innerHTML = "";
       snapshot.forEach((doc) => {
         const data = doc.data();
-        noticesList.innerHTML += `<div class="card"><strong>${data.title}</strong><p>${data.description}</p></div>`;
+        let li = document.createElement("li");
+        li.textContent = data.text;
+        noticeList.appendChild(li);
       });
     });
+  }
 
-    // Load Events
-    const eventsList = document.getElementById("eventsList");
-    onSnapshot(collection(db, "events"), (snapshot) => {
-      eventsList.innerHTML = "";
+  // Load Calendar
+  function loadCalendar() {
+    const calendarList = document.getElementById("calendarList");
+    calendarList.innerHTML = "";
+    db.collection("calendar").orderBy("date", "asc").onSnapshot((snapshot) => {
+      calendarList.innerHTML = "";
       snapshot.forEach((doc) => {
         const data = doc.data();
-        eventsList.innerHTML += `<div class="card"><strong>${data.date}</strong> - ${data.event}</div>`;
+        let li = document.createElement("li");
+        li.textContent = `${data.date} - ${data.event}`;
+        calendarList.appendChild(li);
       });
     });
+  }
 
-    // Load Gallery
-    const galleryList = document.getElementById("galleryList");
-    onSnapshot(collection(db, "gallery"), (snapshot) => {
-      galleryList.innerHTML = "";
+  // Load Gallery
+  function loadGallery() {
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
+    db.collection("gallery").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+      gallery.innerHTML = "";
       snapshot.forEach((doc) => {
         const data = doc.data();
-        galleryList.innerHTML += `<img src="${data.url}" alt="Gallery Photo">`;
+        let img = document.createElement("img");
+        img.src = data.url;
+        img.style.width = "150px";
+        img.style.margin = "5px";
+        gallery.appendChild(img);
       });
     });
+  }
+
+  // Call loaders
+  loadUpdates();
+  loadNotices();
+  loadCalendar();
+  loadGallery();
+</script>
+
   </script>
 </body>
 </html>
