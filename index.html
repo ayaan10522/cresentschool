@@ -1,67 +1,56 @@
 <html lang="en">
-list.innerHTML = ''
-snap.forEach(doc=>{
-const d = doc.data()
-const el = document.createElement('div'); el.className='update'
-el.innerHTML = `<h3>${escapeHTML(d.title||'Untitled')}</h3><div class="meta">${new Date(d.createdAt?.toDate ? d.createdAt.toDate() : d.createdAt).toLocaleString()}</div><p>${escapeHTML(d.body||'')}</p>`
-list.appendChild(el)
-})
-}catch(e){ list.innerHTML = '<div class="meta">Could not load updates.</div>' ; console.error(e) }
-}
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crescent School Portal</title>
+<style>
+:root{--accent:#294b1d;--accent-2:#678b3a;--muted:#666}
+body{font-family:Inter, system-ui, Arial; margin:0; background:#f6f8f4; color:#222}
+header{background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#fff; padding:18px 22px; display:flex; align-items:center; gap:16px}
+header img{height:56px}
+.container{max-width:1100px;margin:28px auto;padding:0 18px}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(20,30,20,0.06)}
+h2{margin:0 0 12px}
+.updates .item,.gallery .item,.events .item{border-bottom:1px solid #eee;padding:12px 0}
+.btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:white;text-decoration:none}
+.muted{color:var(--muted);font-size:13px}
+.gallery-grid{display:flex;flex-wrap:wrap;gap:8px}
+.gallery-grid img{width:120px;height:80px;object-fit:cover;border-radius:6px}
+footer{padding:14px;text-align:center;color:var(--muted)}
+.search{margin-bottom:10px}
+.notice{background:#fffbe6;padding:10px;border-radius:8px;margin-bottom:12px}
+.mpin-box{display:flex;gap:8px;align-items:center}
+.small{font-size:13px}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<img src="/mnt/data/images (1).jpg" alt="logo">
+<div>
+<div style="font-weight:700;font-size:18px">Crescent School</div>
+<div class="muted">Student Portal — Updates, Gallery, Events & Notices</div>
+</div>
+<div style="margin-left:auto;" class="mpin-box">
+<div class="muted small">Enter MPIN to view Admin actions:</div>
+<input id="mpinInput" placeholder="MPIN" style="padding:6px 8px;border-radius:6px;border:1px solid #ddd;margin-left:8px;width:120px">
+<button id="mpinBtn" class="btn">Unlock</button>
+</div>
+</header>
 
 
-// Load events from collection 'events'
-async function loadEvents(){
-const list = document.getElementById('eventsList')
-list.innerHTML='Loading events...'
-try{
-const q = query(collection(db,'events'), orderBy('date','asc'))
-const snap = await getDocs(q)
-if(snap.empty){ list.innerHTML='<div class="meta">No events yet</div>'; return }
-list.innerHTML=''
-snap.forEach(doc=>{
-const d = doc.data()
-const dateStr = d.date?.toDate ? new Date(d.date.toDate()).toDateString() : (d.date? new Date(d.date).toDateString() : 'Unknown')
-const el = document.createElement('div'); el.className='event'
-el.innerHTML = `<strong>${escapeHTML(d.title||'Event')}</strong> <div class="meta">${dateStr} • ${escapeHTML(d.type||'General')}</div><p>${escapeHTML(d.note||'')}</p>`
-list.appendChild(el)
-})
-}catch(e){ list.innerHTML='<div class="meta">Could not load events.</div>'; console.error(e) }
-}
+<div class="container">
+<div class="grid">
+<main>
+<section class="card updates" id="updatesSection">
+<h2>Latest Updates</h2>
+<div id="updatesList">Loading updates...</div>
+</section>
 
 
-// Load gallery from Storage folder 'gallery' (or from 'gallery' collection urls if maintenance required)
-async function loadGallery(){
-const grid = document.getElementById('galleryGrid')
-grid.innerHTML='Loading gallery...'
-try{
-const listRef = ref(storage,'gallery')
-const res = await listAll(listRef)
-grid.innerHTML=''
-if(res.items.length===0){ grid.innerHTML='<div class="meta">No photos yet</div>'; return }
-const urls = await Promise.all(res.items.map(i=>getDownloadURL(i)))
-urls.forEach(u => {
-const img = document.createElement('img'); img.src = u
-grid.appendChild(img)
-})
-}catch(e){
-grid.innerHTML='<div class="meta">Could not load gallery.</div>'
-console.error(e)
-}
-}
-
-
-// Helper escape
-function escapeHTML(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
-
-
-// initApp after MPIN
-function initApp(){ loadUpdates(); loadEvents(); loadGallery();
-// optional: poll every 20s to keep fresh (simple)
-setInterval(()=>{ loadUpdates(); loadEvents(); loadGallery() }, 20000)
-}
-
-
-</script>
-</body>
+<section class="card gallery" style="margin-top:18px">
+<h2>Gallery</h2>
+<div id="galleryGrid" class="gallery-grid">Loading gallery...</div>
+</section>
 </html>
